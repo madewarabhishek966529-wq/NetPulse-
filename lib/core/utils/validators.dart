@@ -19,3 +19,4 @@ class Validators {
     return RegExp(r'^[a-f0-9]{32}$').hasMatch(clean);
   }
 }
+

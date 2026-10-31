@@ -32,3 +32,4 @@ class StorageException extends AppException {
 class DangerousFileWarningException extends AppException {
   DangerousFileWarningException(super.message, {super.code, super.details});
 }
+

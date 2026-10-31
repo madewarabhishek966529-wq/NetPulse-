@@ -113,3 +113,4 @@ class Aria2GlobalStat {
     );
   }
 }
+

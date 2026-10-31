@@ -93,3 +93,4 @@ function sendToNetPulse(url, fileName, referrer) {
     console.error("Native messaging error:", err);
   }
 }
+

@@ -46,3 +46,4 @@ class Formatters {
     return '${pct.toStringAsFixed(1)}%';
   }
 }
+

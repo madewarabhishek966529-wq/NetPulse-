@@ -484,3 +484,4 @@ class DownloadRepository {
     await _dbService.close();
   }
 }
+

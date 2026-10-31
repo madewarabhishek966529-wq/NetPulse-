@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import '../../core/errors/app_exceptions.dart';
@@ -23,30 +22,16 @@ class ChecksumVerificationResult {
 }
 
 class ChecksumService {
-  /// Calculate SHA-256 using streaming to support multi-gigabyte files efficiently
+  /// Calculate SHA-256 using stream binding to support multi-gigabyte files efficiently
   Future<String> calculateSha256(String filePath, {void Function(double progress)? onProgress}) async {
     final file = File(filePath);
     if (!await file.exists()) {
       throw FileVerificationException('File does not exist: $filePath');
     }
 
-    final totalSize = await file.length();
-    int readBytes = 0;
-
-    final output = AccumulatorSink<Digest>();
-    final input = sha256.startChunkedConversion(output);
-
-    final stream = file.openRead();
-    await for (final chunk in stream) {
-      input.add(chunk);
-      readBytes += chunk.length;
-      if (onProgress != null && totalSize > 0) {
-        onProgress((readBytes / totalSize).clamp(0.0, 1.0));
-      }
-    }
-    input.close();
-
-    return output.events.single.toString();
+    final digest = await sha256.bind(file.openRead()).first;
+    if (onProgress != null) onProgress(1.0);
+    return digest.toString();
   }
 
   /// Calculate MD5
@@ -56,16 +41,8 @@ class ChecksumService {
       throw FileVerificationException('File does not exist: $filePath');
     }
 
-    final output = AccumulatorSink<Digest>();
-    final input = md5.startChunkedConversion(output);
-
-    final stream = file.openRead();
-    await for (final chunk in stream) {
-      input.add(chunk);
-    }
-    input.close();
-
-    return output.events.single.toString();
+    final digest = await md5.bind(file.openRead()).first;
+    return digest.toString();
   }
 
   /// Verify integrity against expected hash

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as p;
 import '../../core/constants/category_constants.dart';
@@ -58,7 +57,7 @@ class InspectUrlService {
     }
     if (username != null && username.isNotEmpty) {
       final credentials = '$username:${password ?? ""}';
-      final encoded = 'Basic ${credentials}'; // or base64 in aria2
+      final encoded = 'Basic $credentials'; // or base64 in aria2
       headers['Authorization'] = encoded;
     }
 

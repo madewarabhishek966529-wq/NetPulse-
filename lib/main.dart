@@ -1,121 +1,268 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'core/constants/app_constants.dart';
+import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
+import 'features/add_download/add_download_dialog.dart';
+import 'features/browser/browser_integration_view.dart';
+import 'features/dashboard/dashboard_view.dart';
+import 'features/downloads/download_provider.dart';
+import 'features/downloads/downloads_view.dart';
+import 'features/history/history_view.dart';
+import 'features/network/network_monitor_provider.dart';
+import 'features/network/network_monitor_view.dart';
+import 'features/scheduler/scheduler_service.dart';
+import 'features/scheduler/scheduler_view.dart';
+import 'features/settings/settings_provider.dart';
+import 'features/settings/settings_view.dart';
+import 'repositories/download_repository.dart';
+import 'services/browser_bridge/native_host_manager.dart';
+import 'services/database/database_service.dart';
+import 'services/notifications/notification_service.dart';
+import 'services/system_tray/system_tray_service.dart';
+import 'widgets/app_sidebar.dart';
+import 'widgets/custom_title_bar.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize SQLite FFI
+  DatabaseService.ensureInitialized();
+
+  // Create repository & core services
+  final repository = DownloadRepository();
+  final notificationService = NotificationService();
+  final systemTrayService = SystemTrayService(repository);
+  final schedulerService = SchedulerService(repository);
+  final nativeHostManager = NativeHostManager(repository);
+
+  // Initialize engine and background recovery
+  try {
+    await repository.initialize();
+  } catch (e) {
+    debugPrint('[Main] Engine startup warning: $e');
+  }
+
+  // Start scheduler
+  schedulerService.startScheduler();
+
+  // Start watching for incoming browser extension downloads
+  nativeHostManager.startIncomingWatcher(
+    onDownloadAdded: (item) {
+      notificationService.notify(
+        title: 'Browser Download Added',
+        message: 'Accelerating: "${item.fileName}"',
+        icon: Icons.extension_rounded,
+        color: AppColors.electricBlue,
+      );
+    },
+  );
+
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: notificationService),
+        Provider.value(value: repository),
+        Provider.value(value: systemTrayService),
+        ChangeNotifierProvider(
+          create: (ctx) => DownloadProvider(
+            repository: repository,
+            notificationService: notificationService,
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => NetworkMonitorProvider(repository: repository),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => SettingsProvider(repository: repository),
+        ),
+      ],
+      child: const NetPulseApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class NetPulseApp extends StatelessWidget {
+  const NetPulseApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
+    final settingsProvider = context.watch<SettingsProvider>();
+    final isDark = settingsProvider.settings.darkMode;
+
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      title: AppConstants.appName,
+      debugShowCheckedModeBanner: false,
+      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+      theme: AppTheme.lightTheme(),
+      darkTheme: AppTheme.darkTheme(),
+      home: const MainShellView(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class MainShellView extends StatefulWidget {
+  const MainShellView({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MainShellView> createState() => _MainShellViewState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MainShellViewState extends State<MainShellView> {
+  NavPage _currentPage = NavPage.overview;
+  bool _showNotificationsFlyout = false;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  void _openAddDownloadDialog([String? url]) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AddDownloadDialog(initialUrl: url),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final notificationService = context.watch<NotificationService>();
+
     return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+      body: Column(
+        children: [
+          // Custom Windows Modern Title Bar
+          CustomTitleBar(
+            onAddDownload: () => _openAddDownloadDialog(),
+            onOpenSettings: () => setState(() => _currentPage = NavPage.settings),
+            onToggleNotifications: () {
+              setState(() => _showNotificationsFlyout = !_showNotificationsFlyout);
+            },
+          ),
+
+          // Main Workspace Row (Sidebar + Content + Optional Notifications Flyout)
+          Expanded(
+            child: Stack(
+              children: [
+                Row(
+                  children: [
+                    // Sidebar
+                    AppSidebar(
+                      selectedPage: _currentPage,
+                      onPageSelected: (page) {
+                        setState(() {
+                          _currentPage = page;
+                          _showNotificationsFlyout = false;
+                        });
+                      },
+                    ),
+
+                    // Active View
+                    Expanded(
+                      child: _buildCurrentView(),
+                    ),
+                  ],
+                ),
+
+                // Notifications Flyout
+                if (_showNotificationsFlyout)
+                  Positioned(
+                    top: 10,
+                    right: 20,
+                    width: 320,
+                    bottom: 20,
+                    child: _buildNotificationsFlyout(notificationService, isDark),
+                  ),
+              ],
+            ),
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+    );
+  }
+
+  Widget _buildCurrentView() {
+    switch (_currentPage) {
+      case NavPage.overview:
+        return DashboardView(onAddDownload: () => _openAddDownloadDialog());
+      case NavPage.allDownloads:
+        return const DownloadsView(initialFilter: DownloadFilterStatus.all);
+      case NavPage.activeDownloads:
+        return const DownloadsView(initialFilter: DownloadFilterStatus.active);
+      case NavPage.queuedDownloads:
+        return const DownloadsView(initialFilter: DownloadFilterStatus.queued);
+      case NavPage.completed:
+        return const DownloadsView(initialFilter: DownloadFilterStatus.completed);
+      case NavPage.failed:
+        return const DownloadsView(initialFilter: DownloadFilterStatus.failed);
+      case NavPage.scheduled:
+        return const SchedulerView();
+      case NavPage.browserIntegration:
+        return const BrowserIntegrationView();
+      case NavPage.networkMonitor:
+        return const NetworkMonitorView();
+      case NavPage.settings:
+        return const SettingsView();
+    }
+  }
+
+  Widget _buildNotificationsFlyout(NotificationService service, bool isDark) {
+    final items = service.notifications;
+
+    return Material(
+      elevation: 12,
+      borderRadius: BorderRadius.circular(12),
+      color: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          ),
+        ),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.notifications_rounded, size: 18, color: AppColors.electricBlue),
+                    SizedBox(width: 8),
+                    Text('Notifications', style: TextStyle(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () => service.clearAll(),
+                  child: const Text('Clear All', style: TextStyle(fontSize: 11)),
+                ),
+              ],
+            ),
+            const Divider(),
+            Expanded(
+              child: items.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No notifications',
+                        style: TextStyle(fontSize: 12, color: AppColors.textMutedDark),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: items.length,
+                      separatorBuilder: (context, index) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final n = items[index];
+                        return ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(n.icon, color: n.color, size: 20),
+                          title: Text(n.title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          subtitle: Text(n.message, style: const TextStyle(fontSize: 11)),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

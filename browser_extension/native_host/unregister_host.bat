@@ -8,3 +8,4 @@ REG DELETE "HKCU\Software\Mozilla\NativeMessagingHosts\com.netpulse.downloader" 
 
 echo Done.
 pause
+

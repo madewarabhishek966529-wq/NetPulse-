@@ -32,3 +32,4 @@ class AppConstants {
   // Native Messaging Host
   static const String nativeHostName = 'com.netpulse.downloader';
 }
+

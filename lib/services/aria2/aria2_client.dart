@@ -26,7 +26,7 @@ class Aria2Client {
               ),
             );
 
-  String get _rpcUrl => 'http://$host:$port/jsonrpc';
+  String get rpcUrl => 'http://$host:$port/jsonrpc';
 
   Future<dynamic> _call(String method, [List<dynamic> params = const []]) async {
     _requestId++;

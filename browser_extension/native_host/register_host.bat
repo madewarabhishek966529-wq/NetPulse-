@@ -35,3 +35,4 @@ if %ERRORLEVEL% equ 0 (
 echo.
 echo Registration Complete!
 pause
+
