@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetPulse Integration</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <div class="brand">
+        <div class="logo-glow"></div>
+        <img src="icons/icon32.png" alt="NetPulse Logo" class="logo">
+        <div>
+          <h1 class="title">NetPulse</h1>
+          <p class="tagline">Download Faster. Stay Connected.</p>
+        </div>
+      </div>
+      <div class="status-badge" id="engineStatus">
+        <span class="status-dot"></span> Ready
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <span class="toggle-label">Automatic Interception</span>
+        <span class="toggle-desc">Capture browser downloads automatically</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="interceptToggle" checked>
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="input-group">
+      <label for="extInput" class="input-label">Intercepted File Extensions</label>
+      <input type="text" id="extInput" class="text-input" placeholder="exe, zip, rar, iso, mp4, etc.">
+      <span class="input-hint">Comma separated list</span>
+    </div>
+
+    <button id="saveBtn" class="primary-btn">Save Preferences</button>
+
+    <div class="footer">
+      <span class="version">v1.0.0</span>
+      <span class="info">Native Messaging Connected</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

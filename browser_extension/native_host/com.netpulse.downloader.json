@@ -1,0 +1,10 @@
+{
+  "name": "com.netpulse.downloader",
+  "description": "NetPulse High-Speed Download Manager Native Messaging Host",
+  "path": "netpulse_host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://*",
+    "chrome-extension://netpulse_extension_id/"
+  ]
+}
