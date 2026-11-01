@@ -84,6 +84,8 @@ class DownloadItem {
   final bool isScheduled;
   final DateTime? scheduledStartTime;
   final DateTime? scheduledEndTime;
+  final bool isTorrent;
+  final int seeders;
 
   DownloadItem({
     this.id,
@@ -105,6 +107,8 @@ class DownloadItem {
     this.isScheduled = false,
     this.scheduledStartTime,
     this.scheduledEndTime,
+    this.isTorrent = false,
+    this.seeders = 0,
   }) : createdAt = createdAt ?? DateTime.now();
 
   double get progress {
@@ -139,6 +143,8 @@ class DownloadItem {
     bool? isScheduled,
     DateTime? scheduledStartTime,
     DateTime? scheduledEndTime,
+    bool? isTorrent,
+    int? seeders,
   }) {
     return DownloadItem(
       id: id ?? this.id,
@@ -160,6 +166,8 @@ class DownloadItem {
       isScheduled: isScheduled ?? this.isScheduled,
       scheduledStartTime: scheduledStartTime ?? this.scheduledStartTime,
       scheduledEndTime: scheduledEndTime ?? this.scheduledEndTime,
+      isTorrent: isTorrent ?? this.isTorrent,
+      seeders: seeders ?? this.seeders,
     );
   }
 
@@ -184,6 +192,8 @@ class DownloadItem {
       'is_scheduled': isScheduled ? 1 : 0,
       'scheduled_start_time': scheduledStartTime?.toIso8601String(),
       'scheduled_end_time': scheduledEndTime?.toIso8601String(),
+      'is_torrent': isTorrent ? 1 : 0,
+      'seeders': seeders,
     };
   }
 
@@ -216,7 +226,8 @@ class DownloadItem {
       scheduledEndTime: map['scheduled_end_time'] != null
           ? DateTime.tryParse(map['scheduled_end_time'] as String)
           : null,
+      isTorrent: (map['is_torrent'] as int? ?? 0) == 1,
+      seeders: (map['seeders'] as num?)?.toInt() ?? 0,
     );
   }
 }
-

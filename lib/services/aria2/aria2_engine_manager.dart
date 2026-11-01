@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/torrent_constants.dart';
 import '../../core/errors/app_exceptions.dart';
 import 'aria2_client.dart';
 
@@ -154,6 +155,16 @@ class Aria2EngineManager {
       '--max-tries=5',
       '--retry-wait=3',
       '--quiet=true',
+      // BitTorrent & P2P Acceleration Options
+      '--enable-dht=true',
+      '--enable-dht6=true',
+      '--bt-enable-lpd=true',
+      '--enable-peer-exchange=true',
+      '--bt-max-peers=120',
+      '--bt-request-peer-speed-limit=50M',
+      '--seed-ratio=0.0',
+      '--follow-torrent=mem',
+      '--bt-tracker=${TorrentConstants.trackerArgString}',
     ];
 
     try {

@@ -55,6 +55,26 @@ void main() {
       expect(Validators.isValidMd5('d41d8cd98f00b204e9800998ecf8427e'), isTrue);
       expect(Validators.isValidMd5('invalid'), isFalse);
     });
+
+    test('isMagnetLink checks for BitTorrent magnet URIs', () {
+      expect(
+        Validators.isMagnetLink('magnet:?xt=urn:btih:dd8255ecdc7ca55fb0bbf81323d87062db1f6d1c&dn=Big+Buck+Bunny'),
+        isTrue,
+      );
+      expect(
+        Validators.isMagnetLink('MAGNET:?XT=URN:BTIH:0123456789ABCDEF'),
+        isTrue,
+      );
+      expect(Validators.isMagnetLink('https://example.com/file.torrent'), isFalse);
+      expect(Validators.isMagnetLink(''), isFalse);
+    });
+
+    test('isTorrentFile detects .torrent filename extensions', () {
+      expect(Validators.isTorrentFile('ubuntu-24.04-desktop-amd64.iso.torrent'), isTrue);
+      expect(Validators.isTorrentFile('file.TORRENT'), isTrue);
+      expect(Validators.isTorrentFile('file.zip'), isFalse);
+      expect(Validators.isTorrentFile(''), isFalse);
+    });
   });
 }
 

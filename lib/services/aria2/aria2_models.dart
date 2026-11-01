@@ -39,6 +39,10 @@ class Aria2Status {
   final int pieceLength;
   final int numPieces;
   final String? bitfield;
+  final int numSeeders;
+  final bool isTorrent;
+  final String? torrentName;
+  final List<String> followedBy;
 
   Aria2Status({
     required this.gid,
@@ -54,6 +58,10 @@ class Aria2Status {
     this.pieceLength = 0,
     this.numPieces = 0,
     this.bitfield,
+    this.numSeeders = 0,
+    this.isTorrent = false,
+    this.torrentName,
+    this.followedBy = const [],
   });
 
   String get filePath => files.isNotEmpty ? files.first.path : '';
@@ -63,6 +71,13 @@ class Aria2Status {
     final filesList = rawFiles
         .map((f) => Aria2FileInfo.fromMap(f as Map<String, dynamic>))
         .toList();
+
+    final bt = map['bittorrent'] as Map<String, dynamic>?;
+    final isTorrent = bt != null;
+    final torrentName = bt?['info']?['name']?.toString();
+
+    final rawFollowedBy = map['followedBy'] as List<dynamic>? ?? [];
+    final followedBy = rawFollowedBy.map((e) => e.toString()).toList();
 
     return Aria2Status(
       gid: map['gid']?.toString() ?? '',
@@ -80,6 +95,10 @@ class Aria2Status {
       pieceLength: int.tryParse(map['pieceLength']?.toString() ?? '0') ?? 0,
       numPieces: int.tryParse(map['numPieces']?.toString() ?? '0') ?? 0,
       bitfield: map['bitfield']?.toString(),
+      numSeeders: int.tryParse(map['numSeeders']?.toString() ?? '0') ?? 0,
+      isTorrent: isTorrent,
+      torrentName: torrentName,
+      followedBy: followedBy,
     );
   }
 }
@@ -113,4 +132,3 @@ class Aria2GlobalStat {
     );
   }
 }
-

@@ -45,11 +45,17 @@ class DownloadItemCard extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: catColor.withOpacity(0.12),
+                  color: item.isTorrent ? AppColors.cyberCyan.withOpacity(0.15) : catColor.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: catColor.withOpacity(0.25)),
+                  border: Border.all(
+                    color: item.isTorrent ? AppColors.cyberCyan.withOpacity(0.4) : catColor.withOpacity(0.25),
+                  ),
                 ),
-                child: Icon(catIcon, color: catColor, size: 20),
+                child: Icon(
+                  item.isTorrent ? Icons.hub_rounded : catIcon,
+                  color: item.isTorrent ? AppColors.cyberCyan : catColor,
+                  size: 20,
+                ),
               ),
 
               const SizedBox(width: 12),
@@ -59,15 +65,48 @@ class DownloadItemCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item.fileName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimaryLight,
-                      ),
+                    Row(
+                      children: [
+                        if (item.isTorrent) ...[
+                          Container(
+                            margin: const EdgeInsets.only(right: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                            decoration: BoxDecoration(
+                              color: AppColors.cyberCyan.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: AppColors.cyberCyan.withOpacity(0.4)),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.bolt_rounded, size: 11, color: AppColors.cyberCyan),
+                                SizedBox(width: 2),
+                                Text(
+                                  'TORRENT',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.cyberCyan,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        Expanded(
+                          child: Text(
+                            item.fileName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -100,10 +139,16 @@ class DownloadItemCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.cable_rounded, size: 12, color: AppColors.electricBlue),
+                        Icon(
+                          item.isTorrent ? Icons.group_work_rounded : Icons.cable_rounded,
+                          size: 12,
+                          color: item.isTorrent ? AppColors.cyberCyan : AppColors.electricBlue,
+                        ),
                         const SizedBox(width: 4),
                         Text(
-                          '${item.connections} conn',
+                          item.isTorrent
+                              ? '${item.connections} peers (${item.seeders} seeds)'
+                              : '${item.connections} conn',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,

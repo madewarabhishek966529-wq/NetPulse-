@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -11,6 +12,7 @@ import '../../models/download_segment.dart';
 
 class DatabaseService {
   static Database? _database;
+  static Completer<Database>? _dbOpenCompleter;
   static bool _ffiInitialized = false;
 
   static void ensureInitialized() {
@@ -24,9 +26,19 @@ class DatabaseService {
   }
 
   Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDb();
-    return _database!;
+    if (_database != null && _database!.isOpen) return _database!;
+    if (_dbOpenCompleter != null) return _dbOpenCompleter!.future;
+
+    _dbOpenCompleter = Completer<Database>();
+    try {
+      _database = await _initDb();
+      _dbOpenCompleter!.complete(_database);
+      return _database!;
+    } catch (e, st) {
+      _dbOpenCompleter!.completeError(e, st);
+      _dbOpenCompleter = null;
+      rethrow;
+    }
   }
 
   Future<Database> _initDb({String? overridePath}) async {
@@ -44,13 +56,29 @@ class DatabaseService {
       await dbDir.create(recursive: true);
     }
 
-    return await databaseFactory.openDatabase(
+    final db = await databaseFactory.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
         version: AppConstants.databaseVersion,
         onCreate: _onCreate,
+        onOpen: _onOpen,
       ),
     );
+    return db;
+  }
+
+  Future<void> _onOpen(Database db) async {
+    try {
+      await db.execute('PRAGMA journal_mode = WAL;');
+      await db.execute('PRAGMA busy_timeout = 5000;');
+      await db.execute('PRAGMA synchronous = NORMAL;');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE downloads ADD COLUMN is_torrent INTEGER DEFAULT 0');
+    } catch (_) {}
+    try {
+      await db.execute('ALTER TABLE downloads ADD COLUMN seeders INTEGER DEFAULT 0');
+    } catch (_) {}
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -75,7 +103,9 @@ class DatabaseService {
         priority TEXT DEFAULT 'normal',
         is_scheduled INTEGER DEFAULT 0,
         scheduled_start_time TEXT,
-        scheduled_end_time TEXT
+        scheduled_end_time TEXT,
+        is_torrent INTEGER DEFAULT 0,
+        seeders INTEGER DEFAULT 0
       )
     ''');
 

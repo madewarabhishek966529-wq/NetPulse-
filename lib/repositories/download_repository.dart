@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exceptions.dart';
+import '../../core/utils/validators.dart';
 import '../../models/download_item.dart';
 import '../../models/download_stat.dart';
 import '../services/aria2/aria2_client.dart';
@@ -119,19 +121,25 @@ class DownloadRepository {
       throw Aria2Exception('Download engine is not running');
     }
 
-    final sanitizedName = fileName.trim();
+    final isMagnet = Validators.isMagnetLink(url);
+    final sanitizedName = fileName.trim().isNotEmpty
+        ? fileName.trim()
+        : (isMagnet ? 'Magnet Torrent' : 'download_${DateTime.now().millisecondsSinceEpoch}');
     final fullPath = p.join(targetDirectory, sanitizedName);
 
     final ariaOptions = <String, dynamic>{
       'dir': targetDirectory,
-      'out': sanitizedName,
-      'split': connections.clamp(1, 32).toString(),
-      'max-connection-per-server': connections.clamp(1, 16).toString(),
-      'min-split-size': '5M',
       'continue': 'true',
       'allow-overwrite': 'true',
       'auto-file-renaming': 'false',
     };
+
+    if (!isMagnet) {
+      ariaOptions['out'] = sanitizedName;
+      ariaOptions['split'] = connections.clamp(1, 32).toString();
+      ariaOptions['max-connection-per-server'] = connections.clamp(1, 16).toString();
+      ariaOptions['min-split-size'] = '5M';
+    }
 
     if (startPaused) {
       ariaOptions['pause'] = 'true';
@@ -161,13 +169,14 @@ class DownloadRepository {
       downloadedSize: 0,
       downloadSpeed: 0,
       status: startPaused ? DownloadStatus.paused : DownloadStatus.active,
-      categoryId: category,
+      categoryId: isMagnet ? 'Other' : category,
       connections: connections,
       checksum: expectedChecksum,
       priority: priority,
       isScheduled: isScheduled,
       scheduledStartTime: scheduledStartTime,
       scheduledEndTime: scheduledEndTime,
+      isTorrent: isMagnet,
     );
 
     final id = await _dbService.insertDownload(downloadItem);
@@ -177,6 +186,64 @@ class DownloadRepository {
     // Trigger immediate UI refresh
     await _pollEngine();
 
+    return savedItem;
+  }
+
+  /// Add a BitTorrent download from a .torrent file
+  Future<DownloadItem> addTorrentDownload({
+    required Uint8List torrentBytes,
+    required String fileName,
+    required String targetDirectory,
+    String category = 'Other',
+    DownloadPriority priority = DownloadPriority.normal,
+    bool isScheduled = false,
+    DateTime? scheduledStartTime,
+    DateTime? scheduledEndTime,
+    bool startPaused = false,
+  }) async {
+    if (_client == null) {
+      throw Aria2Exception('Download engine is not running');
+    }
+
+    final sanitizedName = fileName.replaceAll(RegExp(r'\.torrent$', caseSensitive: false), '').trim();
+    final fullPath = p.join(targetDirectory, sanitizedName);
+
+    final ariaOptions = <String, dynamic>{
+      'dir': targetDirectory,
+      'continue': 'true',
+      'allow-overwrite': 'true',
+    };
+
+    if (startPaused) {
+      ariaOptions['pause'] = 'true';
+    }
+
+    final base64Content = base64Encode(torrentBytes);
+    final gid = await _client!.addTorrent(base64Content, options: ariaOptions);
+
+    final downloadItem = DownloadItem(
+      gid: gid,
+      url: 'torrent://$sanitizedName',
+      fileName: sanitizedName,
+      filePath: fullPath,
+      fileSize: 0,
+      downloadedSize: 0,
+      downloadSpeed: 0,
+      status: startPaused ? DownloadStatus.paused : DownloadStatus.active,
+      categoryId: category,
+      connections: 1,
+      priority: priority,
+      isScheduled: isScheduled,
+      scheduledStartTime: scheduledStartTime,
+      scheduledEndTime: scheduledEndTime,
+      isTorrent: true,
+    );
+
+    final id = await _dbService.insertDownload(downloadItem);
+    final savedItem = downloadItem.copyWith(id: id);
+    _activeDownloadsCache[gid] = savedItem;
+
+    await _pollEngine();
     return savedItem;
   }
 
@@ -415,6 +482,19 @@ class DownloadRepository {
             status = DownloadStatus.waiting;
         }
 
+        // Handle magnet metadata transition to payload download task
+        if (ariaTask.followedBy.isNotEmpty) {
+          final childGid = ariaTask.followedBy.first;
+          if (!_activeDownloadsCache.containsKey(childGid)) {
+            var parentItem = _activeDownloadsCache[ariaTask.gid] ?? await _dbService.getDownloadByGid(ariaTask.gid);
+            if (parentItem != null) {
+              final transitioned = parentItem.copyWith(gid: childGid);
+              await _dbService.updateDownload(transitioned);
+              _activeDownloadsCache[childGid] = transitioned;
+            }
+          }
+        }
+
         // Get or load item
         var item = _activeDownloadsCache[ariaTask.gid];
         if (item == null) {
@@ -422,12 +502,19 @@ class DownloadRepository {
         }
 
         if (item != null) {
+          final resolvedName = (ariaTask.torrentName != null && ariaTask.torrentName!.isNotEmpty)
+              ? ariaTask.torrentName!
+              : item.fileName;
+
           final updated = item.copyWith(
+            fileName: resolvedName,
             fileSize: ariaTask.totalLength > 0 ? ariaTask.totalLength : item.fileSize,
             downloadedSize: ariaTask.completedLength,
             downloadSpeed: ariaTask.downloadSpeed,
             status: status,
             connections: ariaTask.connections,
+            isTorrent: item.isTorrent || ariaTask.isTorrent,
+            seeders: ariaTask.numSeeders,
             completedAt: status == DownloadStatus.completed
                 ? (item.completedAt ?? DateTime.now())
                 : null,

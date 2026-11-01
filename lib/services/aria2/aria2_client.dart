@@ -97,6 +97,25 @@ class Aria2Client {
     return result.toString();
   }
 
+  /// addTorrent
+  Future<String> addTorrent(
+    String base64Torrent, {
+    List<String> uris = const [],
+    Map<String, dynamic>? options,
+    int? position,
+  }) async {
+    final params = <dynamic>[base64Torrent, uris];
+    if (options != null) {
+      params.add(options);
+    }
+    if (position != null) {
+      if (options == null) params.add({});
+      params.add(position);
+    }
+    final result = await _call('addTorrent', params);
+    return result.toString();
+  }
+
   /// tellStatus
   Future<Aria2Status> tellStatus(String gid, [List<String>? keys]) async {
     final params = <dynamic>[gid];
