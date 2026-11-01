@@ -7,9 +7,7 @@ import 'package:netpulse/widgets/status_badge.dart';
 import 'package:netpulse/models/download_item.dart';
 
 void main() {
-  testWidgets('StatCard renders title, value, and subtitle', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('StatCard renders title, value, and subtitle', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: Scaffold(
@@ -29,28 +27,28 @@ void main() {
     expect(find.text('8 active connections'), findsOneWidget);
   });
 
-  testWidgets(
-    'StatusBadge renders appropriate label and icon for active status',
-    (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: StatusBadge(status: DownloadStatus.active)),
-        ),
-      );
-
-      expect(find.text('Downloading'), findsOneWidget);
-      expect(find.byIcon(Icons.arrow_downward_rounded), findsOneWidget);
-    },
-  );
-
-  testWidgets('StatusBadge renders appropriate label for completed status', (
-    WidgetTester tester,
-  ) async {
+  testWidgets('StatusBadge renders appropriate label and icon for active status', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: StatusBadge(status: DownloadStatus.completed)),
+        home: Scaffold(
+          body: StatusBadge(status: DownloadStatus.active),
+        ),
+      ),
+    );
+
+    expect(find.text('Downloading'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_downward_rounded), findsOneWidget);
+  });
+
+  testWidgets('StatusBadge renders appropriate label for completed status', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: StatusBadge(status: DownloadStatus.completed),
+        ),
       ),
     );
 
     expect(find.text('Completed'), findsOneWidget);
-  }
+  });
+}
