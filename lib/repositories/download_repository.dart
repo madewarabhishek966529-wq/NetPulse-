@@ -4,13 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../../core/constants/app_constants.dart';
 import '../../core/errors/app_exceptions.dart';
-import '../../models/app_settings.dart';
 import '../../models/download_item.dart';
-import '../../models/download_segment.dart';
 import '../../models/download_stat.dart';
 import '../services/aria2/aria2_client.dart';
 import '../services/aria2/aria2_engine_manager.dart';
-import '../services/aria2/aria2_models.dart';
 import '../services/database/database_service.dart';
 
 class DownloadRepository {

@@ -5,7 +5,6 @@ import 'package:path/path.dart' as p;
 import 'package:provider/provider.dart';
 import '../../../core/constants/category_constants.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/file_utils.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../models/download_item.dart';
 import '../../file_verification/checksum_dialog.dart';

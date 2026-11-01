@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/category_constants.dart';
 import '../../core/theme/app_colors.dart';
-import '../../models/download_item.dart';
 import 'download_provider.dart';
 import 'widgets/download_item_card.dart';
 

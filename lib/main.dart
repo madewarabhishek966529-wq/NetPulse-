@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
@@ -9,7 +8,6 @@ import 'features/browser/browser_integration_view.dart';
 import 'features/dashboard/dashboard_view.dart';
 import 'features/downloads/download_provider.dart';
 import 'features/downloads/downloads_view.dart';
-import 'features/history/history_view.dart';
 import 'features/network/network_monitor_provider.dart';
 import 'features/network/network_monitor_view.dart';
 import 'features/scheduler/scheduler_service.dart';

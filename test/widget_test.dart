@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:netpulse/core/constants/app_constants.dart';
 import 'package:netpulse/core/theme/app_colors.dart';
 import 'package:netpulse/features/dashboard/widgets/stat_card.dart';
 import 'package:netpulse/widgets/status_badge.dart';

@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../core/constants/category_constants.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/file_utils.dart';
 import '../downloads/download_provider.dart';
