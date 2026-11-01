@@ -125,10 +125,24 @@ class Aria2EngineManager {
     return startingPort;
   }
 
+  /// Clean up any orphaned aria2c processes left from crashed or previous runs
+  static Future<void> cleanupStaleAriaProcesses() async {
+    if (Platform.isWindows) {
+      try {
+        await Process.run('taskkill', ['/F', '/IM', 'aria2c.exe']);
+      } catch (_) {}
+    }
+  }
+
   /// Start the aria2 background process and establish JSON-RPC connection
   Future<Aria2Client> startEngine({int? preferredPort}) async {
     if (_isRunning && _client != null) {
       return _client!;
+    }
+
+    // Terminate stale background aria2 processes on application startup
+    if (preferredPort == null) {
+      await cleanupStaleAriaProcesses();
     }
 
     final executable = await findAria2Executable();
@@ -143,6 +157,7 @@ class Aria2EngineManager {
       '--rpc-listen-all=false',
       '--rpc-allow-origin-all=false',
       '--rpc-secret=$_rpcSecret',
+      '--rpc-max-request-size=64M',
       '--max-connection-per-server=16',
       '--split=8',
       '--min-split-size=5M',
@@ -158,10 +173,16 @@ class Aria2EngineManager {
       // BitTorrent & P2P Acceleration Options
       '--enable-dht=true',
       '--enable-dht6=true',
+      '--dht-entry-point=${TorrentConstants.primaryDhtNode}',
+      '--dht-entry-point6=${TorrentConstants.primaryDhtNode}',
+      '--listen-port=6881-6999',
+      '--dht-listen-port=6881-6999',
       '--bt-enable-lpd=true',
       '--enable-peer-exchange=true',
       '--bt-max-peers=120',
       '--bt-request-peer-speed-limit=50M',
+      '--bt-min-crypto-level=plain',
+      '--bt-require-crypto=false',
       '--seed-ratio=0.0',
       '--follow-torrent=mem',
       '--bt-tracker=${TorrentConstants.trackerArgString}',

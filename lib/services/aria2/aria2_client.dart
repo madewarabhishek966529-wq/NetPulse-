@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:dio/dio.dart';
+
 import '../../core/errors/app_exceptions.dart';
 import 'aria2_models.dart';
 
@@ -15,20 +17,24 @@ class Aria2Client {
     this.port = 6800,
     this.secret,
     Dio? dio,
-  }) : _dio = dio ??
-            Dio(
-              BaseOptions(
-                baseUrl: 'http://$host:$port/jsonrpc',
-                connectTimeout: const Duration(seconds: 4),
-                receiveTimeout: const Duration(seconds: 4),
-                sendTimeout: const Duration(seconds: 4),
-                headers: {'Content-Type': 'application/json'},
-              ),
-            );
+  }) : _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: 'http://$host:$port/jsonrpc',
+               connectTimeout: const Duration(seconds: 15),
+               receiveTimeout: const Duration(seconds: 45),
+               sendTimeout: const Duration(seconds: 45),
+               headers: {'Content-Type': 'application/json'},
+             ),
+           );
 
   String get rpcUrl => 'http://$host:$port/jsonrpc';
 
-  Future<dynamic> _call(String method, [List<dynamic> params = const []]) async {
+  Future<dynamic> _call(
+    String method, [
+    List<dynamic> params = const [],
+  ]) async {
     _requestId++;
     final fullParams = <dynamic>[];
     if (secret != null && secret!.isNotEmpty) {
@@ -44,10 +50,7 @@ class Aria2Client {
     };
 
     try {
-      final response = await _dio.post(
-        '',
-        data: jsonEncode(payload),
-      );
+      final response = await _dio.post('', data: jsonEncode(payload));
 
       if (response.statusCode != 200) {
         throw Aria2Exception(
@@ -56,7 +59,9 @@ class Aria2Client {
         );
       }
 
-      final data = response.data is String ? jsonDecode(response.data) : response.data;
+      final data = response.data is String
+          ? jsonDecode(response.data)
+          : response.data;
       if (data is Map<String, dynamic>) {
         if (data.containsKey('error') && data['error'] != null) {
           final err = data['error'];
@@ -142,7 +147,11 @@ class Aria2Client {
   }
 
   /// tellWaiting
-  Future<List<Aria2Status>> tellWaiting(int offset, int num, [List<String>? keys]) async {
+  Future<List<Aria2Status>> tellWaiting(
+    int offset,
+    int num, [
+    List<String>? keys,
+  ]) async {
     final params = <dynamic>[offset, num];
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);
@@ -157,7 +166,11 @@ class Aria2Client {
   }
 
   /// tellStopped
-  Future<List<Aria2Status>> tellStopped(int offset, int num, [List<String>? keys]) async {
+  Future<List<Aria2Status>> tellStopped(
+    int offset,
+    int num, [
+    List<String>? keys,
+  ]) async {
     final params = <dynamic>[offset, num];
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);

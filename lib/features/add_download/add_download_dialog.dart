@@ -45,6 +45,7 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
   bool _showAdvanced = false;
   bool _isScheduled = false;
   DateTime? _scheduledTime;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -164,6 +165,9 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
   }
 
   void _submit({required bool startImmediately}) async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+
     var targetDir = _saveDirController.text.trim();
     if (targetDir.isEmpty) {
       targetDir = await FileUtils.getDefaultDownloadDirectory();
@@ -251,6 +255,10 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to add download: $e'), backgroundColor: AppColors.coralRed),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
       }
     }
   }
@@ -703,13 +711,19 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
                   ),
                   const SizedBox(width: 10),
                   OutlinedButton(
-                    onPressed: () => _submit(startImmediately: false),
+                    onPressed: _isSubmitting ? null : () => _submit(startImmediately: false),
                     child: const Text('Add to Queue'),
                   ),
                   const SizedBox(width: 10),
                   ElevatedButton(
-                    onPressed: () => _submit(startImmediately: true),
-                    child: Text(_selectedTab == 1 || isMagnet ? 'Download Torrent Now' : 'Download Now'),
+                    onPressed: _isSubmitting ? null : () => _submit(startImmediately: true),
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          )
+                        : Text(_selectedTab == 1 || isMagnet ? 'Download Torrent Now' : 'Download Now'),
                   ),
                 ],
               ),

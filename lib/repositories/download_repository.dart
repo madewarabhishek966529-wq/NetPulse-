@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/torrent_constants.dart';
 import '../../core/errors/app_exceptions.dart';
 import '../../core/utils/validators.dart';
 import '../../models/download_item.dart';
@@ -134,7 +135,12 @@ class DownloadRepository {
       'auto-file-renaming': 'false',
     };
 
-    if (!isMagnet) {
+    if (isMagnet) {
+      ariaOptions['bt-tracker'] = TorrentConstants.trackerArgString;
+      ariaOptions['bt-enable-lpd'] = 'true';
+      ariaOptions['enable-peer-exchange'] = 'true';
+      ariaOptions['seed-ratio'] = '0.0';
+    } else {
       ariaOptions['out'] = sanitizedName;
       ariaOptions['split'] = connections.clamp(1, 32).toString();
       ariaOptions['max-connection-per-server'] = connections.clamp(1, 16).toString();
@@ -212,6 +218,10 @@ class DownloadRepository {
       'dir': targetDirectory,
       'continue': 'true',
       'allow-overwrite': 'true',
+      'bt-tracker': TorrentConstants.trackerArgString,
+      'bt-enable-lpd': 'true',
+      'enable-peer-exchange': 'true',
+      'seed-ratio': '0.0',
     };
 
     if (startPaused) {
