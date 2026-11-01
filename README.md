@@ -34,6 +34,13 @@ NetPulse calculates real download throughput directly from transferred wire byte
   - Automatically splits supported downloads into 2 to 16 concurrent segmented streams.
   - Automatically detects servers without range request support and falls back gracefully to stable single-connection transfers without failure.
 
+- **BitTorrent & Magnet Link P2P Acceleration**:
+  - Full support for `.torrent` files with native Windows File Dialog picker (`OpenFileDialog`).
+  - Seamless handling of `magnet:?xt=urn:btih:...` links with automatic metadata discovery and payload transition.
+  - Integrated Distributed Hash Table (DHT), Local Peer Discovery (LPD), and Peer Exchange (PEX).
+  - Pre-configured with 10 high-speed public announce trackers for swift peer and seed discovery.
+  - Real-time peer and seeder statistics monitoring (`peers` and `seeds` counts) on download cards.
+
 - **Automated Download Recovery**:
   - Unfinished and in-progress downloads survive application restarts and sudden connection drops.
   - Control metadata and partial chunks are preserved and automatically reconciled on launch.

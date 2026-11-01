@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/utils/formatters.dart';
-import '../../models/download_item.dart';
 import '../downloads/download_provider.dart';
 import '../downloads/widgets/download_item_card.dart';
 

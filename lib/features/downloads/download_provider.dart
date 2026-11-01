@@ -26,6 +26,7 @@ enum DownloadSortBy {
 class DownloadProvider extends ChangeNotifier {
   final DownloadRepository _repository;
   final NotificationService _notificationService;
+  final Set<String> _notifiedGids = {};
 
   List<DownloadItem> _allDownloads = [];
   DownloadStat _currentStat = const DownloadStat();
@@ -47,6 +48,7 @@ class DownloadProvider extends ChangeNotifier {
   }
 
   DownloadRepository get repository => _repository;
+  NotificationService get notificationService => _notificationService;
   List<DownloadItem> get allDownloads => _allDownloads;
   DownloadStat get currentStat => _currentStat;
   DownloadFilterStatus get filterStatus => _filterStatus;
@@ -128,6 +130,12 @@ class DownloadProvider extends ChangeNotifier {
 
   void _init() {
     _downloadsSub = _repository.downloadsStream.listen((items) {
+      for (final item in items) {
+        if (item.status == DownloadStatus.completed && !_notifiedGids.contains(item.gid)) {
+          _notifiedGids.add(item.gid);
+          _notificationService.notifyDownloadCompleted(item.fileName);
+        }
+      }
       _allDownloads = items;
       _isLoading = false;
       notifyListeners();

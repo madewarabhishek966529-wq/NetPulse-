@@ -497,9 +497,7 @@ class DownloadRepository {
 
         // Get or load item
         var item = _activeDownloadsCache[ariaTask.gid];
-        if (item == null) {
-          item = await _dbService.getDownloadByGid(ariaTask.gid);
-        }
+        item ??= await _dbService.getDownloadByGid(ariaTask.gid);
 
         if (item != null) {
           final resolvedName = (ariaTask.torrentName != null && ariaTask.torrentName!.isNotEmpty)

@@ -69,11 +69,12 @@ class _AddDownloadDialogState extends State<AddDownloadDialog> {
   Future<void> _checkClipboard() async {
     try {
       final data = await Clipboard.getData(Clipboard.kTextPlain);
-      if (data?.text != null && Validators.isValidUrl(data!.text)) {
+      final text = data?.text?.trim();
+      if (text != null && (Validators.isValidUrl(text) || Validators.isMagnetLink(text))) {
         setState(() {
-          _urlController.text = data.text!.trim();
+          _urlController.text = text;
         });
-        if (Validators.isMagnetLink(data!.text)) {
+        if (Validators.isMagnetLink(text)) {
           setState(() {
             _fileNameController.text = 'Magnet Torrent';
           });

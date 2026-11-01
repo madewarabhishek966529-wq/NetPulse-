@@ -11,6 +11,7 @@ class AppColors {
 
   // Accents
   static const Color electricBlue = Color(0xFF00E5FF);
+  static const Color cyberCyan = Color(0xFF00F0FF);
   static const Color vibrantBlue = Color(0xFF0066FF);
   static const Color neonPurple = Color(0xFF7C4DFF);
   static const Color deepPurple = Color(0xFF651FFF);
