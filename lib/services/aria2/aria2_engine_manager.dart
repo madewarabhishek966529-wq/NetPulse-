@@ -134,6 +134,24 @@ class Aria2EngineManager {
     }
   }
 
+  /// Ensure Windows Firewall allows inbound BitTorrent peer traffic for the located binary
+  static Future<void> ensureFirewallRule(String executablePath) async {
+    if (!Platform.isWindows) return;
+    try {
+      await Process.run('netsh', [
+        'advfirewall',
+        'firewall',
+        'add',
+        'rule',
+        'name=NetPulse Torrent Engine',
+        'dir=in',
+        'action=allow',
+        'program=$executablePath',
+        'enable=yes',
+      ]);
+    } catch (_) {}
+  }
+
   /// Prepare and sanitize dedicated DHT routing cache to prevent corrupt cache crashes
   Future<Map<String, String>> _prepareDhtCache() async {
     try {
@@ -184,6 +202,7 @@ class Aria2EngineManager {
 
     final executable = await findAria2Executable();
     debugPrint('[Aria2Engine] Using executable: $executable');
+    await ensureFirewallRule(executable);
 
     _rpcSecret = _generateSecureSecret();
     _rpcPort = await _findAvailablePort(preferredPort ?? AppConstants.defaultRpcPort);
@@ -230,10 +249,12 @@ class Aria2EngineManager {
     ];
 
     if (dhtCache.containsKey('dht4') && dhtCache['dht4'] != null) {
-      args.add('--dht-file-path=${dhtCache['dht4']}');
+      final p4 = dhtCache['dht4']!.replaceAll(r'\', '/');
+      args.add('--dht-file-path=$p4');
     }
     if (dhtCache.containsKey('dht6') && dhtCache['dht6'] != null) {
-      args.add('--dht-file-path6=${dhtCache['dht6']}');
+      final p6 = dhtCache['dht6']!.replaceAll(r'\', '/');
+      args.add('--dht-file-path6=$p6');
     }
 
     try {

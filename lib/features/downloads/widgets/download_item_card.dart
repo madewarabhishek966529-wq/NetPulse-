@@ -203,7 +203,9 @@ class DownloadItemCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    '${Formatters.formatBytes(item.downloadedSize)} / ${item.fileSize > 0 ? Formatters.formatBytes(item.fileSize) : "--"}',
+                    item.isTorrent && item.fileSize <= 0
+                        ? 'Fetching swarm metadata...'
+                        : '${Formatters.formatBytes(item.downloadedSize)} / ${item.fileSize > 0 ? Formatters.formatBytes(item.fileSize) : "--"}',
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight,

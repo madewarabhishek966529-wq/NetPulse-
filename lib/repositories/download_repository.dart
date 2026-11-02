@@ -29,6 +29,8 @@ class DownloadRepository {
 
   // Local in-memory cache of active downloads to prevent excessive SQLite reads
   final Map<String, DownloadItem> _activeDownloadsCache = {};
+  // Track retired parent metadata task GIDs for magnets so they are never marked completed
+  final Set<String> _retiredMetadataGids = {};
   DownloadStat _lastStat = const DownloadStat();
   int _peakSpeed = 0;
   final List<int> _recentSpeeds = [];
@@ -69,16 +71,38 @@ class DownloadRepository {
 
       for (final item in unfinished) {
         try {
+          // If this was a raw local torrent file scheme that cannot be re-added via addUri, skip
+          if (item.url.startsWith('torrent://')) {
+            continue;
+          }
+
           final targetDir = p.dirname(item.filePath);
           final fileName = p.basename(item.filePath);
+          final isMagnet = Validators.isMagnetLink(item.url);
 
           final options = <String, dynamic>{
             'dir': targetDir,
-            'out': fileName,
             'continue': 'true',
-            'split': item.connections.toString(),
-            'max-connection-per-server': item.connections.toString(),
+            'allow-overwrite': 'true',
+            'file-allocation': 'none',
           };
+
+          if (isMagnet || item.isTorrent) {
+            options['bt-tracker'] = TorrentConstants.trackerArgString;
+            options['bt-enable-lpd'] = 'true';
+            options['enable-peer-exchange'] = 'true';
+            options['seed-ratio'] = '0.0';
+            options['bt-max-peers'] = '120';
+            options['bt-request-peer-speed-limit'] = '50M';
+            options['bt-min-crypto-level'] = 'plain';
+            options['bt-require-crypto'] = 'false';
+            options['follow-torrent'] = 'mem';
+          } else {
+            options['out'] = fileName;
+            options['split'] = item.connections.clamp(1, 32).toString();
+            options['max-connection-per-server'] = item.connections.clamp(1, 16).toString();
+            options['min-split-size'] = '5M';
+          }
 
           // Re-add to aria2 engine
           final newGid = await _client!.addUri([item.url], options: options);
@@ -133,6 +157,7 @@ class DownloadRepository {
       'continue': 'true',
       'allow-overwrite': 'true',
       'auto-file-renaming': 'false',
+      'file-allocation': 'none',
     };
 
     if (isMagnet) {
@@ -140,6 +165,11 @@ class DownloadRepository {
       ariaOptions['bt-enable-lpd'] = 'true';
       ariaOptions['enable-peer-exchange'] = 'true';
       ariaOptions['seed-ratio'] = '0.0';
+      ariaOptions['bt-max-peers'] = '120';
+      ariaOptions['bt-request-peer-speed-limit'] = '50M';
+      ariaOptions['bt-min-crypto-level'] = 'plain';
+      ariaOptions['bt-require-crypto'] = 'false';
+      ariaOptions['follow-torrent'] = 'mem';
     } else {
       ariaOptions['out'] = sanitizedName;
       ariaOptions['split'] = connections.clamp(1, 32).toString();
@@ -218,10 +248,16 @@ class DownloadRepository {
       'dir': targetDirectory,
       'continue': 'true',
       'allow-overwrite': 'true',
+      'file-allocation': 'none',
       'bt-tracker': TorrentConstants.trackerArgString,
       'bt-enable-lpd': 'true',
       'enable-peer-exchange': 'true',
       'seed-ratio': '0.0',
+      'bt-max-peers': '120',
+      'bt-request-peer-speed-limit': '50M',
+      'bt-min-crypto-level': 'plain',
+      'bt-require-crypto': 'false',
+      'follow-torrent': 'mem',
     };
 
     if (startPaused) {
@@ -312,6 +348,9 @@ class DownloadRepository {
         await _client!.forceRemove(gid);
       } catch (_) {}
     }
+    try {
+      await _client!.purgeDownloadResult();
+    } catch (_) {}
 
     final item = await _dbService.getDownloadByGid(gid);
     if (item != null) {
@@ -349,15 +388,31 @@ class DownloadRepository {
 
     final targetDir = p.dirname(item.filePath);
     final fileName = p.basename(item.filePath);
+    final isMagnet = Validators.isMagnetLink(item.url);
 
     final options = <String, dynamic>{
       'dir': targetDir,
-      'out': fileName,
-      'split': item.connections.toString(),
-      'max-connection-per-server': item.connections.toString(),
       'continue': 'true',
       'allow-overwrite': 'true',
+      'file-allocation': 'none',
     };
+
+    if (isMagnet || item.isTorrent) {
+      options['bt-tracker'] = TorrentConstants.trackerArgString;
+      options['bt-enable-lpd'] = 'true';
+      options['enable-peer-exchange'] = 'true';
+      options['seed-ratio'] = '0.0';
+      options['bt-max-peers'] = '120';
+      options['bt-request-peer-speed-limit'] = '50M';
+      options['bt-min-crypto-level'] = 'plain';
+      options['bt-require-crypto'] = 'false';
+      options['follow-torrent'] = 'mem';
+    } else {
+      options['out'] = fileName;
+      options['split'] = item.connections.clamp(1, 32).toString();
+      options['max-connection-per-server'] = item.connections.clamp(1, 16).toString();
+      options['min-split-size'] = '5M';
+    }
 
     final newGid = await _client!.addUri([item.url], options: options);
     final updated = item.copyWith(
@@ -465,6 +520,36 @@ class DownloadRepository {
       final shouldPersistToDb = (_syncDbCounter % 3 == 0); // Throttle SQLite writes to every ~2.2s
 
       for (final ariaTask in allEngineTasks) {
+        // Skip retired metadata tasks
+        if (_retiredMetadataGids.contains(ariaTask.gid)) {
+          continue;
+        }
+
+        // Handle magnet metadata transition to payload download task
+        if (ariaTask.followedBy.isNotEmpty) {
+          final childGid = ariaTask.followedBy.first;
+          _retiredMetadataGids.add(ariaTask.gid);
+
+          var parentItem = _activeDownloadsCache[ariaTask.gid] ?? await _dbService.getDownloadByGid(ariaTask.gid);
+          if (parentItem != null) {
+            _activeDownloadsCache.remove(ariaTask.gid);
+            final resolvedName = (ariaTask.torrentName != null && ariaTask.torrentName!.isNotEmpty)
+                ? ariaTask.torrentName!
+                : parentItem.fileName;
+
+            final transitioned = parentItem.copyWith(
+              gid: childGid,
+              fileName: resolvedName,
+              status: DownloadStatus.active,
+              isTorrent: true,
+            );
+            await _dbService.updateDownload(transitioned);
+            _activeDownloadsCache[childGid] = transitioned;
+            debugPrint('[MagnetHandoff] Successfully migrated metadata GID ${ariaTask.gid} to payload GID $childGid for "$resolvedName"');
+          }
+          continue; // Crucial: do not treat metadata task completion as file completion
+        }
+
         totalConnections += ariaTask.connections;
         final remaining = (ariaTask.totalLength - ariaTask.completedLength).clamp(0, ariaTask.totalLength);
         totalRemaining += remaining;
@@ -492,19 +577,6 @@ class DownloadRepository {
             status = DownloadStatus.waiting;
         }
 
-        // Handle magnet metadata transition to payload download task
-        if (ariaTask.followedBy.isNotEmpty) {
-          final childGid = ariaTask.followedBy.first;
-          if (!_activeDownloadsCache.containsKey(childGid)) {
-            var parentItem = _activeDownloadsCache[ariaTask.gid] ?? await _dbService.getDownloadByGid(ariaTask.gid);
-            if (parentItem != null) {
-              final transitioned = parentItem.copyWith(gid: childGid);
-              await _dbService.updateDownload(transitioned);
-              _activeDownloadsCache[childGid] = transitioned;
-            }
-          }
-        }
-
         // Get or load item
         var item = _activeDownloadsCache[ariaTask.gid];
         item ??= await _dbService.getDownloadByGid(ariaTask.gid);
@@ -513,6 +585,11 @@ class DownloadRepository {
           final resolvedName = (ariaTask.torrentName != null && ariaTask.torrentName!.isNotEmpty)
               ? ariaTask.torrentName!
               : item.fileName;
+
+          // Guard against premature "complete" flag on empty metadata tasks
+          if (item.isTorrent && ariaTask.totalLength <= 0 && status == DownloadStatus.completed) {
+            status = DownloadStatus.active;
+          }
 
           final updated = item.copyWith(
             fileName: resolvedName,
