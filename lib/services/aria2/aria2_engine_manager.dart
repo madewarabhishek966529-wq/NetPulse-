@@ -134,6 +134,43 @@ class Aria2EngineManager {
     }
   }
 
+  /// Prepare and sanitize dedicated DHT routing cache to prevent corrupt cache crashes
+  Future<Map<String, String>> _prepareDhtCache() async {
+    try {
+      Directory baseDir;
+      try {
+        baseDir = await getApplicationSupportDirectory();
+      } catch (_) {
+        baseDir = Directory(p.join(Directory.current.path, '.netpulse'));
+      }
+
+      final dhtDir = Directory(p.join(baseDir.path, 'dht'));
+      if (!dhtDir.existsSync()) {
+        dhtDir.createSync(recursive: true);
+      }
+
+      final dht4 = File(p.join(dhtDir.path, 'dht.dat'));
+      final dht6 = File(p.join(dhtDir.path, 'dht6.dat'));
+
+      // Clean up corrupt/empty 0-byte cache files that cause aria2 deserializer crashes
+      if (dht4.existsSync() && dht4.lengthSync() < 16) {
+        try { dht4.deleteSync(); } catch (_) {}
+      }
+      if (dht6.existsSync() && dht6.lengthSync() < 16) {
+        try { dht6.deleteSync(); } catch (_) {}
+      }
+
+      return {
+        'workingDir': baseDir.path,
+        'dht4': dht4.path,
+        'dht6': dht6.path,
+      };
+    } catch (e) {
+      debugPrint('[Aria2Engine] DHT cache prep error: $e');
+      return {};
+    }
+  }
+
   /// Start the aria2 background process and establish JSON-RPC connection
   Future<Aria2Client> startEngine({int? preferredPort}) async {
     if (_isRunning && _client != null) {
@@ -151,13 +188,16 @@ class Aria2EngineManager {
     _rpcSecret = _generateSecureSecret();
     _rpcPort = await _findAvailablePort(preferredPort ?? AppConstants.defaultRpcPort);
 
+    final dhtCache = await _prepareDhtCache();
+    final workingDir = dhtCache['workingDir'];
+
     final args = [
       '--enable-rpc=true',
       '--rpc-listen-port=$_rpcPort',
       '--rpc-listen-all=false',
       '--rpc-allow-origin-all=false',
       '--rpc-secret=$_rpcSecret',
-      '--rpc-max-request-size=64M',
+      '--rpc-max-request-size=128M',
       '--max-connection-per-server=16',
       '--split=8',
       '--min-split-size=5M',
@@ -170,6 +210,7 @@ class Aria2EngineManager {
       '--max-tries=5',
       '--retry-wait=3',
       '--quiet=true',
+      '--summary-interval=0',
       // BitTorrent & P2P Acceleration Options
       '--enable-dht=true',
       '--enable-dht6=true',
@@ -188,10 +229,18 @@ class Aria2EngineManager {
       '--bt-tracker=${TorrentConstants.trackerArgString}',
     ];
 
+    if (dhtCache.containsKey('dht4') && dhtCache['dht4'] != null) {
+      args.add('--dht-file-path=${dhtCache['dht4']}');
+    }
+    if (dhtCache.containsKey('dht6') && dhtCache['dht6'] != null) {
+      args.add('--dht-file-path6=${dhtCache['dht6']}');
+    }
+
     try {
       _process = await Process.start(
         executable,
         args,
+        workingDirectory: workingDir,
         mode: ProcessStartMode.normal,
       );
 
@@ -207,10 +256,10 @@ class Aria2EngineManager {
         secret: _rpcSecret,
       );
 
-      // Verify connection with health-check retry loop
+      // Verify connection with health-check retry loop (up to 25 attempts x 200ms = 5.0 seconds)
       bool connected = false;
       int retries = 0;
-      const maxRetries = 15;
+      const maxRetries = 25;
 
       while (!connected && retries < maxRetries) {
         await Future.delayed(const Duration(milliseconds: 200));
@@ -243,7 +292,7 @@ class Aria2EngineManager {
     }
   }
 
-  /// Graceful shutdown
+  /// Graceful shutdown: RPC shutdown first, wait for process exit, then fallback to kill
   Future<void> stopEngine() async {
     if (_client != null) {
       try {
@@ -253,9 +302,22 @@ class Aria2EngineManager {
 
     if (_process != null) {
       try {
-        _process!.kill(ProcessSignal.sigterm);
+        // Wait up to 1500ms for clean exit
+        await _process!.exitCode.timeout(
+          const Duration(milliseconds: 1500),
+          onTimeout: () {
+            try {
+              _process!.kill(ProcessSignal.sigterm);
+            } catch (_) {
+              _process!.kill(ProcessSignal.sigkill);
+            }
+            return -1;
+          },
+        );
       } catch (_) {
-        _process!.kill(ProcessSignal.sigkill);
+        try {
+          _process!.kill(ProcessSignal.sigkill);
+        } catch (_) {}
       }
       _process = null;
     }

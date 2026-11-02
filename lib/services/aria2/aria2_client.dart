@@ -22,9 +22,9 @@ class Aria2Client {
            Dio(
              BaseOptions(
                baseUrl: 'http://$host:$port/jsonrpc',
-               connectTimeout: const Duration(seconds: 15),
-               receiveTimeout: const Duration(seconds: 45),
-               sendTimeout: const Duration(seconds: 45),
+               connectTimeout: const Duration(seconds: 10),
+               receiveTimeout: const Duration(seconds: 15),
+               sendTimeout: const Duration(seconds: 15),
                headers: {'Content-Type': 'application/json'},
              ),
            );
@@ -34,6 +34,7 @@ class Aria2Client {
   Future<dynamic> _call(
     String method, [
     List<dynamic> params = const [],
+    Duration? timeout,
   ]) async {
     _requestId++;
     final fullParams = <dynamic>[];
@@ -49,8 +50,16 @@ class Aria2Client {
       'params': fullParams,
     };
 
+    final requestOptions = timeout != null
+        ? Options(sendTimeout: timeout, receiveTimeout: timeout)
+        : null;
+
     try {
-      final response = await _dio.post('', data: jsonEncode(payload));
+      final response = await _dio.post(
+        '',
+        data: jsonEncode(payload),
+        options: requestOptions,
+      );
 
       if (response.statusCode != 200) {
         throw Aria2Exception(
@@ -73,18 +82,26 @@ class Aria2Client {
       }
       throw Aria2Exception('Invalid response format from aria2 engine');
     } on DioException catch (e) {
+      final detail = switch (e.type) {
+        DioExceptionType.connectionTimeout => 'Connection to aria2 engine timed out ($method)',
+        DioExceptionType.sendTimeout => 'Sending data to aria2 engine timed out ($method)',
+        DioExceptionType.receiveTimeout => 'Receiving response from aria2 engine timed out ($method). Engine may be busy with large metadata.',
+        DioExceptionType.badResponse => 'Aria2 engine rejected request: ${e.response?.statusCode}',
+        DioExceptionType.connectionError => 'Cannot connect to aria2 engine on $host:$port. Engine process may have stopped.',
+        _ => e.message ?? 'Unknown network error',
+      };
       throw RpcConnectionException(
-        'Failed to connect to aria2 engine: ${e.message}',
+        detail,
         code: e.type.name,
         details: e,
       );
     } catch (e) {
       if (e is AppException) rethrow;
-      throw Aria2Exception('Unexpected aria2 RPC error: $e');
+      throw Aria2Exception('Unexpected aria2 RPC error ($method): $e');
     }
   }
 
-  /// addUri
+  /// addUri (30s timeout for network/magnet URI parsing)
   Future<String> addUri(
     List<String> uris, {
     Map<String, dynamic>? options,
@@ -98,11 +115,11 @@ class Aria2Client {
       if (options == null) params.add({});
       params.add(position);
     }
-    final result = await _call('addUri', params);
+    final result = await _call('addUri', params, const Duration(seconds: 30));
     return result.toString();
   }
 
-  /// addTorrent
+  /// addTorrent (60s timeout for base64 serialization and large piece hash arrays)
   Future<String> addTorrent(
     String base64Torrent, {
     List<String> uris = const [],
@@ -117,27 +134,27 @@ class Aria2Client {
       if (options == null) params.add({});
       params.add(position);
     }
-    final result = await _call('addTorrent', params);
+    final result = await _call('addTorrent', params, const Duration(seconds: 60));
     return result.toString();
   }
 
-  /// tellStatus
+  /// tellStatus (8s timeout)
   Future<Aria2Status> tellStatus(String gid, [List<String>? keys]) async {
     final params = <dynamic>[gid];
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);
     }
-    final result = await _call('tellStatus', params);
+    final result = await _call('tellStatus', params, const Duration(seconds: 8));
     return Aria2Status.fromMap(result as Map<String, dynamic>);
   }
 
-  /// tellActive
+  /// tellActive (8s timeout)
   Future<List<Aria2Status>> tellActive([List<String>? keys]) async {
     final params = <dynamic>[];
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);
     }
-    final result = await _call('tellActive', params);
+    final result = await _call('tellActive', params, const Duration(seconds: 8));
     if (result is List) {
       return result
           .map((item) => Aria2Status.fromMap(item as Map<String, dynamic>))
@@ -146,7 +163,7 @@ class Aria2Client {
     return [];
   }
 
-  /// tellWaiting
+  /// tellWaiting (8s timeout)
   Future<List<Aria2Status>> tellWaiting(
     int offset,
     int num, [
@@ -156,7 +173,7 @@ class Aria2Client {
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);
     }
-    final result = await _call('tellWaiting', params);
+    final result = await _call('tellWaiting', params, const Duration(seconds: 8));
     if (result is List) {
       return result
           .map((item) => Aria2Status.fromMap(item as Map<String, dynamic>))
@@ -165,7 +182,7 @@ class Aria2Client {
     return [];
   }
 
-  /// tellStopped
+  /// tellStopped (8s timeout)
   Future<List<Aria2Status>> tellStopped(
     int offset,
     int num, [
@@ -175,7 +192,7 @@ class Aria2Client {
     if (keys != null && keys.isNotEmpty) {
       params.add(keys);
     }
-    final result = await _call('tellStopped', params);
+    final result = await _call('tellStopped', params, const Duration(seconds: 8));
     if (result is List) {
       return result
           .map((item) => Aria2Status.fromMap(item as Map<String, dynamic>))
@@ -184,87 +201,87 @@ class Aria2Client {
     return [];
   }
 
-  /// pause
+  /// pause (8s timeout)
   Future<String> pause(String gid) async {
-    final result = await _call('pause', [gid]);
+    final result = await _call('pause', [gid], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// forcePause
+  /// forcePause (8s timeout)
   Future<String> forcePause(String gid) async {
-    final result = await _call('forcePause', [gid]);
+    final result = await _call('forcePause', [gid], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// unpause
+  /// unpause (8s timeout)
   Future<String> unpause(String gid) async {
-    final result = await _call('unpause', [gid]);
+    final result = await _call('unpause', [gid], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// pauseAll
+  /// pauseAll (10s timeout)
   Future<String> pauseAll() async {
-    final result = await _call('pauseAll');
+    final result = await _call('pauseAll', const [], const Duration(seconds: 10));
     return result.toString();
   }
 
-  /// unpauseAll
+  /// unpauseAll (10s timeout)
   Future<String> unpauseAll() async {
-    final result = await _call('unpauseAll');
+    final result = await _call('unpauseAll', const [], const Duration(seconds: 10));
     return result.toString();
   }
 
-  /// remove
+  /// remove (8s timeout)
   Future<String> remove(String gid) async {
-    final result = await _call('remove', [gid]);
+    final result = await _call('remove', [gid], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// forceRemove
+  /// forceRemove (8s timeout)
   Future<String> forceRemove(String gid) async {
-    final result = await _call('forceRemove', [gid]);
+    final result = await _call('forceRemove', [gid], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// changeOption
+  /// changeOption (8s timeout)
   Future<String> changeOption(String gid, Map<String, dynamic> options) async {
-    final result = await _call('changeOption', [gid, options]);
+    final result = await _call('changeOption', [gid, options], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// changeGlobalOption
+  /// changeGlobalOption (8s timeout)
   Future<String> changeGlobalOption(Map<String, dynamic> options) async {
-    final result = await _call('changeGlobalOption', [options]);
+    final result = await _call('changeGlobalOption', [options], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// getGlobalOption
+  /// getGlobalOption (8s timeout)
   Future<Map<String, dynamic>> getGlobalOption() async {
-    final result = await _call('getGlobalOption');
+    final result = await _call('getGlobalOption', const [], const Duration(seconds: 8));
     return Map<String, dynamic>.from(result as Map);
   }
 
-  /// getGlobalStat
+  /// getGlobalStat (8s timeout)
   Future<Aria2GlobalStat> getGlobalStat() async {
-    final result = await _call('getGlobalStat');
+    final result = await _call('getGlobalStat', const [], const Duration(seconds: 8));
     return Aria2GlobalStat.fromMap(result as Map<String, dynamic>);
   }
 
-  /// purgeDownloadResult
+  /// purgeDownloadResult (8s timeout)
   Future<String> purgeDownloadResult() async {
-    final result = await _call('purgeDownloadResult');
+    final result = await _call('purgeDownloadResult', const [], const Duration(seconds: 8));
     return result.toString();
   }
 
-  /// getVersion
+  /// getVersion (5s timeout)
   Future<Map<String, dynamic>> getVersion() async {
-    final result = await _call('getVersion');
+    final result = await _call('getVersion', const [], const Duration(seconds: 5));
     return Map<String, dynamic>.from(result as Map);
   }
 
-  /// shutdown
+  /// shutdown (5s timeout)
   Future<String> shutdown() async {
-    final result = await _call('shutdown');
+    final result = await _call('shutdown', const [], const Duration(seconds: 5));
     return result.toString();
   }
 }
