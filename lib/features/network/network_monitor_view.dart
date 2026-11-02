@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/formatters.dart';
 import '../dashboard/widgets/speed_chart.dart';
@@ -15,7 +16,7 @@ class NetworkMonitorView extends StatefulWidget {
 
 class _NetworkMonitorViewState extends State<NetworkMonitorView> {
   final _limitController = TextEditingController();
-  int _globalLimitKb = 0; // 0 = unlimited
+  int _globalLimitKb = 0;
   int _maxConcurrent = 3;
 
   @override
@@ -35,7 +36,11 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
     context.read<NetworkMonitorProvider>().setGlobalLimit(bytesPerSec);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(kb == 0 ? 'Global speed limit removed (Unlimited)' : 'Global limit set to ${kb} KB/s'),
+        content: Text(
+          kb == 0
+              ? 'Global speed limit removed (Unlimited)'
+              : 'Global limit set to ${kb} KB/s',
+        ),
         backgroundColor: AppColors.electricBlue,
         duration: const Duration(seconds: 1),
       ),
@@ -58,7 +63,11 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
             // Page Header
             Row(
               children: [
-                const Icon(Icons.speed_rounded, size: 24, color: AppColors.electricBlue),
+                const Icon(
+                  Icons.speed_rounded,
+                  size: 24,
+                  color: AppColors.electricBlue,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   'Advanced Network Monitor',
@@ -70,15 +79,24 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
                 ),
                 const SizedBox(width: 10),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.emeraldGreen.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.emeraldGreen.withOpacity(0.3)),
+                    border: Border.all(
+                      color: AppColors.emeraldGreen.withOpacity(0.3),
+                    ),
                   ),
                   child: const Text(
                     'Real-Time Telemetry',
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.emeraldGreen),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.emeraldGreen,
+                    ),
                   ),
                 ),
               ],
@@ -119,7 +137,8 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
                 StatCard(
                   title: 'Total Transferred',
                   value: Formatters.formatBytes(stat.totalDownloadedBytes),
-                  subtitle: 'Remaining: ${Formatters.formatBytes(stat.totalRemainingBytes)}',
+                  subtitle:
+                      'Remaining: ${Formatters.formatBytes(stat.totalRemainingBytes)}',
                   icon: Icons.cloud_download_rounded,
                   accentColor: AppColors.emeraldGreen,
                 ),
@@ -161,10 +180,15 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
                     children: [
                       const Text(
                         'Global Download Speed Limit',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
-                        _globalLimitKb == 0 ? 'Unlimited' : '${_globalLimitKb} KB/s',
+                        _globalLimitKb == 0
+                            ? 'Unlimited'
+                            : '${_globalLimitKb} KB/s',
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
@@ -199,7 +223,10 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
                     children: [
                       const Text(
                         'Maximum Simultaneous Downloads',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         '$_maxConcurrent active tasks',
@@ -242,7 +269,9 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
           ? AppColors.electricBlue.withOpacity(0.18)
           : (isDark ? AppColors.darkBg : AppColors.lightBg),
       side: BorderSide(
-        color: isSelected ? AppColors.electricBlue : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
+        color: isSelected
+            ? AppColors.electricBlue
+            : (isDark ? AppColors.darkBorder : AppColors.lightBorder),
       ),
       labelStyle: TextStyle(
         fontSize: 11,
@@ -254,4 +283,3 @@ class _NetworkMonitorViewState extends State<NetworkMonitorView> {
     );
   }
 }
-

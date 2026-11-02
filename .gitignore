@@ -46,3 +46,11 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+
+# NetPulse local data & caches
+.netpulse/
+.netpulse_data/
+__pycache__/
+*.pyc
+.pytest_cache/

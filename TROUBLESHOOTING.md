@@ -1,95 +1,65 @@
 # NetPulse Troubleshooting Guide
-
-This guide covers common issues, root causes, and resolutions when running or developing **NetPulse**.
-
----
-
-## 🔧 1. Aria2 Engine Issues
-
-### Symptom: `Aria2 process failed to respond to JSON-RPC after 15 attempts`
-**Possible Causes & Solutions:**
-1. **Port Conflict**: Another application (or an orphaned aria2c process) is using port 6800.
-   - NetPulse automatically attempts to find an available port in the range 6800–6850.
-   - To terminate orphaned aria2 processes manually:
-     ```powershell
-     Stop-Process -Name "aria2c" -Force -ErrorAction SilentlyContinue
-     ```
-2. **Antivirus or Firewall Block**:
-   - Ensure your firewall allows localhost loopback communication on `127.0.0.1`. NetPulse does not communicate outside localhost for engine RPC.
-3. **Missing `aria2c.exe`**:
-   - Verify that `assets\bin\aria2c.exe` exists in your project.
-   - Run `assets\bin\aria2c.exe -v` to ensure the executable has execute permissions and runs.
+**Platform:** Windows 10 & Windows 11 (x64)
 
 ---
 
-## 🛠️ 2. Flutter Windows Compilation Issues
+## 🔧 1. Download Engine (aria2c) Issues
 
-### Symptom: `Unable to find suitable Visual Studio toolchain. Please run flutter doctor for more details.`
-**Cause:**
-Flutter Windows desktop compilation requires the Microsoft C++ build tools.
+### Symptom: `AbstractDiskWriter.cc:496 errorCode=17 File truncation failed`
+- **Root Cause:** Occurs on Windows NTFS/FAT32 volumes when memory-mapped file handles hold disk blocks while aria2 attempts preallocation.
+- **Resolution:** NetPulse sets `--file-allocation=none` across both global configuration and per-download task option maps. Verify that custom options in Settings do not re-enable preallocation.
 
-**Solution:**
-Install Visual Studio 2022 Build Tools with Desktop C++ workload:
-```powershell
-winget install Microsoft.VisualStudio.2022.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
-```
-Then restart your terminal and run `flutter doctor`.
+### Symptom: `Failed to load DHT routing table` or `errorCode=1`
+- **Root Cause:** A 0-byte or corrupted `dht.dat` / `dht6.dat` file in the working directory caused the aria2 binary deserializer to abort.
+- **Resolution:** NetPulse isolates DHT caches in `.netpulse/dht/` and automatically purges corrupted files smaller than 16 bytes before launching the engine.
+
+### Symptom: Inbound BitTorrent Peer Connections Blocked (Zero Seeds / 0% Speed)
+- **Root Cause:** Windows Firewall blocking inbound peer swarm packets on TCP/UDP ports 6881–6999.
+- **Resolution:** Run `setup.ps1` or execute the following PowerShell command as Administrator:
+  ```powershell
+  netsh advfirewall firewall add rule name="NetPulse Torrent Engine" dir=in action=allow program="<Path_To_NetPulse>\assets\bin\aria2c.exe" enable=yes
+  ```
 
 ---
 
-## 🌐 3. Browser Extension Troubleshooting
+## 🚀 2. FastAPI Backend & Smart URL Analyzer
+
+### Symptom: Backend health check times out during launch (`run_netpulse.ps1`)
+- **Possible Causes & Solutions:**
+  1. **Port 8000 Conflict:** Another service (e.g. dev web server) is occupying port 8000.
+     - Check: `netstat -ano | findstr 8000`
+     - Terminate the conflicting PID or adjust port in `backend/app/main.py`.
+  2. **Missing Python Modules:**
+     - Run: `pip install -r backend/requirements.txt`
+  3. **Self-Test Verification:**
+     - Run: `pytest backend/tests -v`
+
+### Symptom: `Security check failed: Destination IP falls within prohibited network`
+- **Explanation:** This is an intentional security safeguard. NetPulse's SSRF validator blocks attempts to analyze internal network endpoints (`127.0.0.1`, `localhost`, `192.168.x.x`, `10.x.x.x`, `169.254.169.254`). Only publicly accessible internet URLs may be analyzed.
+
+---
+
+## 🌐 3. Browser Extension Integration
 
 ### Symptom: Extension popup displays "Offline" or "Disconnected"
-**Cause:**
-The browser cannot find the Native Messaging Host manifest or Python runtime.
-
-**Solution:**
-1. Verify registration in the Windows Registry:
-   ```powershell
-   reg query "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.netpulse.downloader"
-   ```
-2. If the key is missing or points to the wrong directory:
-   - Run `browser_extension\native_host\register_host.bat`
-   - Or open NetPulse > **Browser Integration** > click **1-Click Register Native Messaging Host**.
-3. Verify Python is installed and accessible in `PATH`:
-   ```powershell
-   python --version
-   ```
-
-### Symptom: Downloads are not intercepted automatically
-**Solution:**
-1. Click the NetPulse extension icon in your browser toolbar.
-2. Ensure **Automatic Interception** toggle is enabled.
-3. Check that the file extension is listed under **Intercepted File Extensions** (e.g. `exe, zip, rar, iso, mp4`).
+- **Resolution:**
+  1. Verify the NetPulse FastAPI backend is running on `http://127.0.0.1:8000/api/health`.
+  2. If using Native Messaging fallback, ensure the Windows Registry key is present:
+     ```powershell
+     reg query "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.netpulse.downloader"
+     ```
+  3. To re-register Native Messaging, run `.\setup.ps1`.
 
 ---
 
-## 💾 4. Download Failures & Recovery
+## 💻 4. Process Cleanup & Reset
 
-### Symptom: Download shows "Failed" with HTTP 403 (Forbidden)
-**Cause:**
-The server requires authentication, a temporary token that expired, or dynamic session cookies.
-
-**Solution:**
-1. In the Add Download dialog, expand **Advanced Options**.
-2. Provide your **HTTP Username** and **HTTP Password** if required.
-3. If downloading from a website with session cookies, use the right-click **Download with NetPulse** context menu from the browser extension so cookies are passed automatically.
-
-### Symptom: Resuming download fails with "HTTP 416 (Range Not Satisfiable)"
-**Cause:**
-The remote server modified the file since the download started, or the server does not support partial byte requests.
-
-**Solution:**
-Click the **Restart** button on the download card to re-fetch the file from byte 0.
-
----
-
-## 🖥️ 5. Windows Defender SmartScreen Notice
-
-### Symptom: "Windows protected your PC" prompt on `NetPulse-Setup.exe`
-**Cause:**
-Windows Defender SmartScreen flags newly generated executable files until they establish reputation or are digitally signed with an EV Code Signing certificate.
-
-**Solution:**
-Click **More info** and select **Run anyway**. NetPulse is completely open-source, contains zero adware, and bundles verified binaries.
-
+To completely stop all NetPulse background daemons and reset locks:
+```powershell
+Stop-Process -Name "aria2c" -Force -ErrorAction SilentlyContinue
+Stop-Process -Name "python" -Force -ErrorAction SilentlyContinue
+```
+Then restart cleanly with:
+```powershell
+.\run_netpulse.ps1
+```

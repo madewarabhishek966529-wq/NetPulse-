@@ -4,17 +4,23 @@ import 'core/constants/app_constants.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/add_download/add_download_dialog.dart';
+import 'features/about/about_view.dart';
+import 'features/analyzer/analyzer_provider.dart';
+import 'features/analyzer/analyzer_view.dart';
 import 'features/browser/browser_integration_view.dart';
 import 'features/dashboard/dashboard_view.dart';
 import 'features/downloads/download_provider.dart';
 import 'features/downloads/downloads_view.dart';
+import 'features/history/history_view.dart';
 import 'features/network/network_monitor_provider.dart';
 import 'features/network/network_monitor_view.dart';
+import 'features/queue/queue_view.dart';
 import 'features/scheduler/scheduler_service.dart';
 import 'features/scheduler/scheduler_view.dart';
 import 'features/settings/settings_provider.dart';
 import 'features/settings/settings_view.dart';
 import 'repositories/download_repository.dart';
+import 'services/api/backend_api_client.dart';
 import 'services/browser_bridge/native_host_manager.dart';
 import 'services/database/database_service.dart';
 import 'services/notifications/notification_service.dart';
@@ -57,12 +63,18 @@ void main() async {
     },
   );
 
+  final backendApiClient = BackendApiClient();
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: notificationService),
         Provider.value(value: repository),
         Provider.value(value: systemTrayService),
+        Provider.value(value: backendApiClient),
+        ChangeNotifierProvider(
+          create: (ctx) => AnalyzerProvider(apiClient: backendApiClient),
+        ),
         ChangeNotifierProvider(
           create: (ctx) => DownloadProvider(
             repository: repository,
@@ -180,12 +192,14 @@ class _MainShellViewState extends State<MainShellView> {
     switch (_currentPage) {
       case NavPage.overview:
         return DashboardView(onAddDownload: () => _openAddDownloadDialog());
+      case NavPage.analyzer:
+        return const AnalyzerView();
       case NavPage.allDownloads:
         return const DownloadsView(initialFilter: DownloadFilterStatus.all);
       case NavPage.activeDownloads:
         return const DownloadsView(initialFilter: DownloadFilterStatus.active);
       case NavPage.queuedDownloads:
-        return const DownloadsView(initialFilter: DownloadFilterStatus.queued);
+        return const QueueView();
       case NavPage.completed:
         return const DownloadsView(initialFilter: DownloadFilterStatus.completed);
       case NavPage.failed:
@@ -194,10 +208,14 @@ class _MainShellViewState extends State<MainShellView> {
         return const SchedulerView();
       case NavPage.browserIntegration:
         return const BrowserIntegrationView();
+      case NavPage.history:
+        return const HistoryView();
       case NavPage.networkMonitor:
         return const NetworkMonitorView();
       case NavPage.settings:
         return const SettingsView();
+      case NavPage.about:
+        return const AboutView();
     }
   }
 

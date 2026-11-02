@@ -1,18 +1,17 @@
 # NetPulse — Advanced High-Speed Download Manager
+### *Download Smarter. Download Faster.*
 
 <div align="center">
 
 ![NetPulse Logo](assets/icons/logo.png)
 
-### **Download Faster. Stay Connected.**
-
-*Next-generation, production-ready desktop download accelerator and manager for Windows 10 & Windows 11.*
+*Production-ready, intelligent desktop download accelerator and website resource analyzer for Windows 10 & Windows 11.*
 
 [![Platform](https://img.shields.io/badge/Platform-Windows%2010%20%7C%2011%20x64-00E5FF.svg?style=flat-square)](#)
 [![Flutter](https://img.shields.io/badge/Flutter-3.47.5-0066FF.svg?style=flat-square&logo=flutter)](#)
-[![Dart](https://img.shields.io/badge/Dart-3.13.4-00E5FF.svg?style=flat-square&logo=dart)](#)
+[![Backend](https://img.shields.io/badge/Backend-FastAPI%20Python%203.12-009688.svg?style=flat-square&logo=fastapi)](#)
 [![Engine](https://img.shields.io/badge/Engine-aria2c%201.37.0-7C4DFF.svg?style=flat-square)](#)
-[![Database](https://img.shields.io/badge/Database-SQLite%20FFI-00E676.svg?style=flat-square&logo=sqlite)](#)
+[![Database](https://img.shields.io/badge/Database-SQLite%20WAL-00E676.svg?style=flat-square&logo=sqlite)](#)
 [![License](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg?style=flat-square)](#)
 
 </div>
@@ -21,158 +20,149 @@
 
 ## 🚀 Overview
 
-**NetPulse** is a high-performance alternative to traditional Windows download utilities. Engineered from the ground up for modern high-bandwidth fiber and 5G connections, NetPulse couples a sleek, glassmorphic Material 3 desktop user interface with the battle-tested, C++ multi-connection **aria2c** download engine over a localhost-isolated JSON-RPC 2.0 communication bus.
+**NetPulse** is an enterprise-grade Windows download manager combining three core pillars:
+1. **Smart Website URL Analyzer**: Intelligently inspects publicly accessible webpages, discovers legitimate downloadable files (videos, archives, executables, disk images, documents), and automatically shields users by filtering known advertising and tracking networks without breaking genuine downloads.
+2. **High-Speed Acceleration Engine**: Powered by the hardened, C++ multi-connection `aria2c` engine over authenticated JSON-RPC with dynamic port binding, zero-allocation disk writes, and hardened BitTorrent/Magnet peer-discovery.
+3. **Seamless Browser Integration**: Native Manifest V3 extensions for Google Chrome and Microsoft Edge with one-click context menus (*"Download with NetPulse"*, *"Analyze page with NetPulse"*) connecting directly to the local backend.
 
-NetPulse calculates real download throughput directly from transferred wire bytes, segments files dynamically using HTTP Range requests, automatically resumes interrupted transfers across machine restarts, and seamlessly integrates with Google Chrome, Microsoft Edge, and Mozilla Firefox via Windows Native Messaging.
+The entire NetPulse system launches seamlessly with a single command:
+```powershell
+.\run_netpulse.ps1
+```
 
 ---
 
 ## ✨ Key Capabilities
 
+- **Smart Website URL Analyzer**:
+  - Scrapes publicly accessible webpage URLs to discover downloadable media and packages.
+  - Multi-layer SSRF validation blocking loopback (`127.0.0.0/8`, `::1`), private RFC 1918 ranges, and link-local cloud metadata addresses.
+  - Conservative ad-filter blocklist eliminating intrusive ad-network links and tracking parameters (`utm_*`, `gclid`, `fbclid`).
+  - High-confidence content-disposition and range-support detection.
+
 - **Intelligent Multi-Connection Acceleration**:
-  - Dynamically inspects server response headers (`Content-Disposition`, `Content-Length`, `Accept-Ranges`).
-  - Automatically splits supported downloads into 2 to 16 concurrent segmented streams.
-  - Automatically detects servers without range request support and falls back gracefully to stable single-connection transfers without failure.
+  - Splits supported files into up to 16 concurrent segmented streams.
+  - Automatic fallback to single-connection streams when servers do not support range requests.
+  - Eliminates Windows memory-mapped file truncation errors (`errorCode=17`) via zero-allocation disk writing.
 
-- **BitTorrent & Magnet Link P2P Acceleration**:
-  - Full support for `.torrent` files with native Windows File Dialog picker (`OpenFileDialog`).
-  - Seamless handling of `magnet:?xt=urn:btih:...` links with automatic metadata discovery and payload transition.
-  - Integrated Distributed Hash Table (DHT), Local Peer Discovery (LPD), and Peer Exchange (PEX).
-  - Pre-configured with 10 high-speed public announce trackers for swift peer and seed discovery.
-  - Real-time peer and seeder statistics monitoring (`peers` and `seeds` counts) on download cards.
+- **Hardened BitTorrent & Magnet Swarm Engine**:
+  - Full `.torrent` and magnet link P2P acceleration.
+  - Dynamic public tracker auto-configuration and isolated DHT routing table cache preventing deserializer crashes.
+  - Real-time peer metrics (active seeders, peer count, swarm health).
+  - Atomic magnet metadata-to-payload child GID migration.
 
-- **Automated Download Recovery**:
-  - Unfinished and in-progress downloads survive application restarts and sudden connection drops.
-  - Control metadata and partial chunks are preserved and automatically reconciled on launch.
-  - Configurable exponential retry counters and socket connection timeouts.
-
-- **Real-Time Network Telemetry**:
-  - Live 60-second throughput line chart powered by `fl_chart`.
-  - Precise metrics for current speed, 60s moving average, session peak throughput, and total transferred bytes.
-  - Granular bandwidth limits: dynamic global throttle and individual download caps.
-
-- **Native Browser Integration**:
-  - Native Messaging host registered with Windows Registry for Google Chrome, Microsoft Edge, and Mozilla Firefox.
-  - Automatic interception of downloadable file types (.exe, .zip, .iso, .mp4, etc.).
-  - Right-click context menu: *"Download with NetPulse"*.
-  - Offline fallback: queued download requests are preserved in LocalAppData and ingested the moment NetPulse launches.
-
-- **Download Scheduler & Priority Queue**:
-  - Schedule heavy downloads for off-peak hours (e.g. night downloads at 02:00 AM).
+- **Queue Management & Scheduling**:
+  - Configurable concurrency thresholds (e.g. 1 to 10 active tasks).
   - Priority-weighted queue processing (High > Normal > Low).
-  - Configurable simultaneous transfer thresholds.
+  - Off-peak download scheduling.
+
+- **Chrome & Edge Browser Integration**:
+  - Manifest V3 extension communicating directly via authenticated HTTP REST API with Native Messaging fallback.
+  - Context menu shortcuts and configurable extension auto-interception.
 
 - **Security & Integrity Verification**:
-  - Built-in streaming SHA-256 and MD5 checksum validator.
-  - Live verification progress without loading multi-gigabyte files into RAM.
-  - One-click checksum match comparison against publisher hashes.
-  - Protective warnings before executing dangerous executable extensions (`.exe`, `.bat`, `.cmd`, `.msi`, `.ps1`).
-
-- **Windows System Tray & Background Operation**:
-  - Minimize to system tray on window close.
-  - Active transfers continue uninterrupted in the background.
+  - Multi-layer SSRF validation and path traversal sanitization.
+  - Windows reserved DOS device name protection (`CON`, `PRN`, `AUX`, `NUL`, etc.).
+  - Streaming SHA-256 and MD5 cryptographic checksum validator.
+  - Strict compliance: never bypasses DRM, paywalls, CAPTCHAs, or copyright protections.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-|---|---|
-| **Frontend Framework** | Flutter Desktop (Windows x64) |
-| **Language** | Dart 3.13.4 |
-| **Design Language** | Custom Material 3 Futuristic Dark & Light Theme (`#090D16`, `#00E5FF`, `#7C4DFF`) |
-| **Engine** | aria2c (v1.37.0) with JSON-RPC 2.0 |
-| **Database** | SQLite via `sqflite_common_ffi` |
-| **Network Client** | Dio 5.x for URL inspection & headers negotiation |
-| **Telemetry & Visuals** | `fl_chart` |
-| **Hashing & Security** | `crypto` (SHA-256, MD5) |
-| **Browser Bridge** | Native Messaging Host + Manifest V3 Chrome/Edge & Firefox extensions |
-| **Packaging** | Inno Setup 6 (`NetPulse-Setup.exe`) |
+| Component | Technology | Role |
+|---|---|---|
+| **Desktop Frontend** | Flutter Desktop (Dart 3.13) | Material 3 futuristic desktop UI, telemetry, and state |
+| **Core Backend** | Python 3.12 + FastAPI + Uvicorn | Smart URL Analyzer, SSRF validator, ad-filter, REST API |
+| **Download Engine** | aria2c 1.37.0 (Official C++ Windows build) | High-speed segmented downloading and BitTorrent engine |
+| **Storage** | SQLite (WAL mode) + SQLAlchemy | Thread-safe, crash-resilient metadata and history database |
+| **Browser Extension** | Chrome & Edge Manifest V3 | Right-click context menus & automated interception |
+| **Packaging** | Inno Setup 6 + PowerShell | Complete Windows 10/11 installer and launch scripts |
 
 ---
 
 ## ⚡ Quick Start
 
-### Option A: Install from Windows Setup Executable
-Download and run the installer generated in `dist/`:
+### 1. One-Command Setup
+To verify and install all dependencies (Python backend, Flutter packages, firewall rules, and browser messaging):
 ```powershell
-.\dist\NetPulse-Setup.exe
+.\setup.ps1
 ```
 
-### Option B: Run in Development with One Command
-From the project root:
-```bash
-flutter run -d windows
+### 2. One-Command Launch
+To start the entire NetPulse system (FastAPI backend + aria2c engine + Flutter desktop UI):
+```powershell
+.\run_netpulse.ps1
 ```
-The application will automatically:
-1. Locate or extract the bundled `aria2c.exe` background engine.
-2. Initialize SQLite persistence (`netpulse.db`).
-3. Bind a localhost-only JSON-RPC server with an auto-generated cryptographic token.
-4. Reconcile any interrupted or pending downloads.
-5. Display the futuristic dashboard with live telemetry.
 
 ---
 
-## 📂 Project Architecture
+## 📂 System Architecture
 
 ```
 NetPulse/
 ├── assets/
 │   ├── bin/aria2c.exe              # Bundled aria2c Windows x64 binary
-│   └── icons/                      # App logos, tray icons, splash branding
+│   └── icons/                      # App logos, tray icons, branding
+├── backend/
+│   ├── app/
+│   │   ├── api/endpoints.py        # REST API routes (/api/analyze, /api/downloads, /api/browser)
+│   │   ├── database/db.py          # SQLite database configuration & SQLAlchemy models
+│   │   ├── models/schemas.py       # Pydantic request and response schemas
+│   │   ├── security/ssrf_validator.py # SSRF protection & safe filename sanitization
+│   │   ├── services/
+│   │   │   ├── ad_filter_service.py   # Ad/tracker domain filter & query param stripper
+│   │   │   ├── analyzer_service.py    # Smart Website URL Analyzer
+│   │   │   └── aria2_service.py       # aria2 JSON-RPC client
+│   │   ├── websocket/manager.py    # Real-time WebSocket connection manager
+│   │   └── main.py                 # FastAPI application & lifespan manager
+│   ├── tests/                      # Pytest suite (SSRF, ad-filter, analyzer, database CRUD)
+│   └── requirements.txt            # Python dependencies
 ├── browser_extension/
-│   ├── chrome/                     # Chrome & Edge extension (Manifest V3)
-│   ├── firefox/                    # Firefox extension (Manifest V2/V3)
-│   └── native_host/                # Native messaging host script, manifest, & registry installer
-├── dist/
-│   └── NetPulse-Setup.exe          # Compiled Windows installer
-├── installer/
-│   ├── netpulse.iss                # Inno Setup 6 script
-│   └── license.txt                 # EULA license
+│   ├── chrome/                     # Manifest V3 extension (background.js, popup.html/js)
+│   └── native_host/                # Native messaging host scripts & registry installer
 ├── lib/
-│   ├── core/                       # Constants, categories, errors, formatters, validators, theme
+│   ├── core/                       # Constants, colors, theme, validators
 │   ├── features/
-│   │   ├── dashboard/              # Stat cards, real-time speed chart, active transfers
-│   │   ├── downloads/              # Filterable downloads view, item cards, bulk actions
-│   │   ├── add_download/           # Add URL dialog, Dio URL inspector, Range detector
-│   │   ├── network/                # Network monitor view & provider
-│   │   ├── scheduler/              # Scheduler view & automated priority queue
-│   │   ├── browser/                # Browser integration view & 1-click registry setup
-│   │   ├── history/                # History view with CSV export
-│   │   └── settings/               # General, download, engine, and theme settings
+│   │   ├── analyzer/               # Smart Analyzer view and provider
+│   │   ├── queue/                  # Download Queue view
+│   │   ├── dashboard/              # Speed chart, telemetry, active downloads
+│   │   ├── downloads/              # Filterable downloads view & cards
+│   │   ├── browser/                # Browser integration view
+│   │   ├── history/                # History view
+│   │   ├── network/                # Network telemetry view & provider
+│   │   ├── settings/               # Application & engine settings
+│   │   └── about/                  # About NetPulse view
 │   ├── services/
-│   │   ├── aria2/                  # Aria2Client (JSON-RPC), Aria2EngineManager, Aria2Models
-│   │   ├── database/               # SQLite FFI database service
-│   │   ├── browser_bridge/         # NativeHostManager & incoming queue file watcher
-│   │   ├── file_verification/      # Streaming SHA-256 / MD5 checksum service
-│   │   ├── notifications/          # In-app and desktop notifications
-│   │   └── system_tray/            # System tray integration
-│   ├── models/                     # DownloadItem, DownloadStat, AppSettings, DownloadSegment
-│   ├── repositories/               # DownloadRepository coordinating engine & SQLite
-│   └── main.dart                   # Application entry point & title bar shell
-└── test/
-    ├── unit/                       # Unit tests for formatters, validators, categories, DB, checksums
-    ├── integration/                # Live aria2 engine JSON-RPC integration test
-    └── widget_test.dart            # Flutter widget tests
+│   │   ├── api/backend_api_client.dart # Dio client connecting Flutter to FastAPI
+│   │   ├── aria2/                  # aria2 JSON-RPC client & engine manager
+│   │   └── database/               # Local SQLite database service
+│   └── main.dart                   # Desktop shell & navigation
+├── run_netpulse.ps1                 # Single-command application launcher
+├── setup.ps1                       # Automated environment configuration script
+├── API_DOCUMENTATION.md            # Complete REST & WebSocket API specification
+├── SECURITY.md                     # SSRF defense, ad-filter, and compliance documentation
+└── ARCHITECTURE.md                 # In-depth architectural blueprint
 ```
 
 ---
 
-## 🧪 Testing
+## 🧪 Testing & Verification
 
-Execute the comprehensive automated test suite:
-```bash
-flutter test
+Run the automated backend test suite:
+```powershell
+pytest backend/tests -v
 ```
-All unit, integration, and widget tests run directly against real application logic and verify:
-- Cryptographic hash calculation (SHA-256 and MD5) against known digests.
-- Path traversal sanitization and dangerous executable checks.
-- SQLite database persistence and model serialization.
-- Live aria2 process startup, version detection, `addUri`, `tellStatus`, `pause`, `unpause`, and graceful shutdown.
+All 8 backend tests verify:
+- SSRF loopback, private RFC 1918, and link-local IP blocking.
+- Safe filename sanitization (DOS reserved device names, path traversal).
+- Ad and tracker blocklist filtering and parameter stripping.
+- HTML candidate extraction and classification.
+- Database CRUD and Pydantic schema serialization.
 
 ---
 
 ## 📜 License
 
-Distributed under the BSD-3-Clause License. See [`installer/license.txt`](installer/license.txt) for details.
-Aria2 is licensed under the GNU General Public License v2.
+Distributed under the BSD-3-Clause License. See [`installer/license.txt`](installer/license.txt) for details.  
+aria2 is licensed under the GNU General Public License v2.

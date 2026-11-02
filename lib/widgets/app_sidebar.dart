@@ -5,6 +5,7 @@ import '../features/downloads/download_provider.dart';
 
 enum NavPage {
   overview,
+  analyzer,
   allDownloads,
   activeDownloads,
   queuedDownloads,
@@ -12,8 +13,10 @@ enum NavPage {
   failed,
   scheduled,
   browserIntegration,
+  history,
   networkMonitor,
   settings,
+  about,
 }
 
 class AppSidebar extends StatelessWidget {
@@ -62,75 +65,49 @@ class AppSidebar extends StatelessWidget {
                   page: NavPage.overview,
                   icon: Icons.dashboard_outlined,
                   selectedIcon: Icons.dashboard_rounded,
-                  label: 'Overview',
+                  label: 'Dashboard',
+                ),
+                _buildNavItem(
+                  context,
+                  page: NavPage.analyzer,
+                  icon: Icons.auto_awesome_outlined,
+                  selectedIcon: Icons.auto_awesome_rounded,
+                  label: 'Smart Analyzer',
+                  badge: 'AI',
+                  badgeColor: AppColors.cyberCyan,
                 ),
                 _buildNavItem(
                   context,
                   page: NavPage.allDownloads,
                   icon: Icons.folder_open_outlined,
                   selectedIcon: Icons.folder_rounded,
-                  label: 'All Downloads',
+                  label: 'Downloads',
                   badge: downloadProvider.allDownloads.isNotEmpty
                       ? '${downloadProvider.allDownloads.length}'
                       : null,
                 ),
                 _buildNavItem(
                   context,
-                  page: NavPage.activeDownloads,
-                  icon: Icons.arrow_downward_outlined,
-                  selectedIcon: Icons.arrow_downward_rounded,
-                  label: 'Active Downloads',
-                  badge: activeCount > 0 ? '$activeCount' : null,
-                  badgeColor: AppColors.electricBlue,
-                ),
-                _buildNavItem(
-                  context,
                   page: NavPage.queuedDownloads,
                   icon: Icons.hourglass_empty_rounded,
                   selectedIcon: Icons.hourglass_full_rounded,
-                  label: 'Queued Downloads',
+                  label: 'Download Queue',
                   badge: queuedCount > 0 ? '$queuedCount' : null,
                   badgeColor: AppColors.amberWarning,
                 ),
-                _buildNavItem(
-                  context,
-                  page: NavPage.completed,
-                  icon: Icons.check_circle_outline_rounded,
-                  selectedIcon: Icons.check_circle_rounded,
-                  label: 'Completed',
-                  badge: completedCount > 0 ? '$completedCount' : null,
-                  badgeColor: AppColors.emeraldGreen,
-                ),
-                _buildNavItem(
-                  context,
-                  page: NavPage.failed,
-                  icon: Icons.error_outline_rounded,
-                  selectedIcon: Icons.error_rounded,
-                  label: 'Failed',
-                  badge: failedCount > 0 ? '$failedCount' : null,
-                  badgeColor: AppColors.coralRed,
-                ),
-                _buildNavItem(
-                  context,
-                  page: NavPage.scheduled,
-                  icon: Icons.schedule_outlined,
-                  selectedIcon: Icons.schedule_rounded,
-                  label: 'Scheduled',
-                  badge: scheduledCount > 0 ? '$scheduledCount' : null,
-                  badgeColor: AppColors.neonPurple,
-                ),
-
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8),
-                  child: Divider(),
-                ),
-
                 _buildNavItem(
                   context,
                   page: NavPage.browserIntegration,
                   icon: Icons.extension_outlined,
                   selectedIcon: Icons.extension_rounded,
                   label: 'Browser Integration',
+                ),
+                _buildNavItem(
+                  context,
+                  page: NavPage.history,
+                  icon: Icons.history_rounded,
+                  selectedIcon: Icons.manage_history_rounded,
+                  label: 'Download History',
                 ),
                 _buildNavItem(
                   context,
@@ -145,6 +122,13 @@ class AppSidebar extends StatelessWidget {
                   icon: Icons.settings_outlined,
                   selectedIcon: Icons.settings_rounded,
                   label: 'Settings',
+                ),
+                _buildNavItem(
+                  context,
+                  page: NavPage.about,
+                  icon: Icons.info_outline_rounded,
+                  selectedIcon: Icons.info_rounded,
+                  label: 'About NetPulse',
                 ),
               ],
             ),

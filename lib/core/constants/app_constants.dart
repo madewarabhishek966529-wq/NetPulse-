@@ -31,5 +31,9 @@ class AppConstants {
 
   // Native Messaging Host
   static const String nativeHostName = 'com.netpulse.downloader';
+
+  // FastAPI Backend
+  static const String backendBaseUrl = 'http://127.0.0.1:8000';
+  static const String backendWsUrl = 'ws://127.0.0.1:8000/ws/downloads';
 }
 

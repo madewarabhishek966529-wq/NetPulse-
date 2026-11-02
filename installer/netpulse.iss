@@ -40,6 +40,11 @@ Name: "registerbrowser"; Description: "Register browser integration (Chrome, Edg
 Source: "..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: DirExists(ExpandConstant('{app}'))
 ; Bundled aria2 background engine
 Source: "..\assets\bin\aria2c.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+; NetPulse Python Backend
+Source: "..\backend\*"; DestDir: "{app}\backend"; Flags: ignoreversion recursesubdirs
+; Launch Scripts
+Source: "..\run_netpulse.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\setup.ps1"; DestDir: "{app}"; Flags: ignoreversion
 ; Application icon & branding
 Source: "..\assets\icons\*"; DestDir: "{app}\assets\icons"; Flags: ignoreversion recursesubdirs
 ; Native Messaging Host & Browser extensions

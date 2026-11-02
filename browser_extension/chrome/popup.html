@@ -14,11 +14,11 @@
         <img src="icons/icon32.png" alt="NetPulse Logo" class="logo">
         <div>
           <h1 class="title">NetPulse</h1>
-          <p class="tagline">Download Faster. Stay Connected.</p>
+          <p class="tagline">Download Smarter. Download Faster.</p>
         </div>
       </div>
       <div class="status-badge" id="engineStatus">
-        <span class="status-dot"></span> Ready
+        <span class="status-dot"></span> Checking...
       </div>
     </div>
 
@@ -43,14 +43,16 @@
       <span class="input-hint">Comma separated list</span>
     </div>
 
-    <button id="saveBtn" class="primary-btn">Save Preferences</button>
+    <div style="display: flex; gap: 8px; margin-top: 10px;">
+      <button id="saveBtn" class="primary-btn" style="flex: 1;">Save Preferences</button>
+      <button id="analyzeTabBtn" class="secondary-btn" style="flex: 1; background: rgba(0, 240, 255, 0.12); color: #00F0FF; border: 1px solid rgba(0, 240, 255, 0.4); border-radius: 8px; font-weight: 600; cursor: pointer; padding: 10px;">Analyze Tab</button>
+    </div>
 
     <div class="footer">
       <span class="version">v1.0.0</span>
-      <span class="info">Native Messaging Connected</span>
+      <span class="info" id="connectionInfo">FastAPI & Native Bridge</span>
     </div>
   </div>
   <script src="popup.js"></script>
 </body>
 </html>
-
