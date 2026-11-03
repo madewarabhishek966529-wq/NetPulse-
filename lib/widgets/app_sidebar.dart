@@ -238,7 +238,7 @@ class AppSidebar extends StatelessWidget {
                       fontSize: 12.5,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                       color: isSelected
-                          ? (isDark ? Colors.white : AppColors.textPrimaryLight)
+                          ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)
                           : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
                     ),
                   ),

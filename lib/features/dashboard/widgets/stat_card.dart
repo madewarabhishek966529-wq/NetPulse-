@@ -62,7 +62,7 @@ class StatCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
-              color: isDark ? Colors.white : AppColors.textPrimaryLight,
+              color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
               letterSpacing: 0.3,
             ),
           ),

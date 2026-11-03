@@ -56,7 +56,7 @@ class SpeedChart extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                        color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                       ),
                     ),
                   ],
@@ -139,7 +139,7 @@ class SpeedChart extends StatelessWidget {
                       gradient: LinearGradient(
                         colors: [
                           AppColors.electricBlue.withOpacity(0.35),
-                          AppColors.neonPurple.withOpacity(0.02),
+                          AppColors.darkBg.withOpacity(0.0),
                         ],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,

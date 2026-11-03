@@ -70,7 +70,7 @@ class _SettingsViewState extends State<SettingsView> {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                   ),
                 ),
               ],
@@ -86,7 +86,7 @@ class _SettingsViewState extends State<SettingsView> {
               children: [
                 SwitchListTile(
                   title: const Text('Dark Mode', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  subtitle: const Text('Futuristic dark theme with neon cyan and purple accents', style: TextStyle(fontSize: 11)),
+                  subtitle: const Text('Ultra-luxurious obsidian slate & soft lavender theme', style: TextStyle(fontSize: 11)),
                   value: settings.darkMode,
                   onChanged: (val) => settingsProvider.toggleDarkMode(val),
                 ),
@@ -275,7 +275,7 @@ class _SettingsViewState extends State<SettingsView> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : AppColors.textPrimaryLight,
+                    color: isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight,
                   ),
                 ),
               ],

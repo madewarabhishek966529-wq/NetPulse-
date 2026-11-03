@@ -56,9 +56,7 @@ class CustomTitleBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 10),
               ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [AppColors.electricBlue, AppColors.neonPurple],
-                ).createShader(bounds),
+                shaderCallback: (bounds) => AppColors.brandGradient.createShader(bounds),
                 child: const Text(
                   AppConstants.appName,
                   style: TextStyle(

@@ -5,10 +5,10 @@ class AppTheme {
   static ThemeData darkTheme({Color accentColor = AppColors.electricBlue}) {
     final colorScheme = ColorScheme.dark(
       primary: accentColor,
-      secondary: AppColors.neonPurple,
+      secondary: AppColors.vibrantBlue,
       surface: AppColors.darkSurface,
       error: AppColors.coralRed,
-      onPrimary: Colors.black,
+      onPrimary: AppColors.swatch1Obsidian,
       onSecondary: Colors.white,
       onSurface: AppColors.textPrimaryDark,
       onError: Colors.white,
@@ -22,8 +22,17 @@ class AppTheme {
       cardColor: AppColors.darkCard,
       dividerColor: AppColors.darkDivider,
       fontFamily: 'Segoe UI',
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: AppColors.textPrimaryDark),
+        bodyMedium: TextStyle(color: AppColors.textPrimaryDark),
+        bodySmall: TextStyle(color: AppColors.textSecondaryDark),
+        titleLarge: TextStyle(color: AppColors.textPrimaryDark, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: AppColors.textPrimaryDark, fontWeight: FontWeight.w600),
+        titleSmall: TextStyle(color: AppColors.textSecondaryDark),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.darkSurface,
+        foregroundColor: AppColors.textPrimaryDark,
         elevation: 0,
         centerTitle: false,
         scrolledUnderElevation: 0,
@@ -65,11 +74,11 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
-          foregroundColor: Colors.black,
+          foregroundColor: AppColors.swatch1Obsidian,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -112,8 +121,17 @@ class AppTheme {
       cardColor: AppColors.lightCard,
       dividerColor: AppColors.lightDivider,
       fontFamily: 'Segoe UI',
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(color: AppColors.textPrimaryLight),
+        bodyMedium: TextStyle(color: AppColors.textPrimaryLight),
+        bodySmall: TextStyle(color: AppColors.textSecondaryLight),
+        titleLarge: TextStyle(color: AppColors.textPrimaryLight, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: AppColors.textPrimaryLight, fontWeight: FontWeight.w600),
+        titleSmall: TextStyle(color: AppColors.textSecondaryLight),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.lightSurface,
+        foregroundColor: AppColors.textPrimaryLight,
         elevation: 0,
         centerTitle: false,
         scrolledUnderElevation: 0,

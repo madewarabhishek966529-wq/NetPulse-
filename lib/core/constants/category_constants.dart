@@ -88,21 +88,21 @@ class CategoryConstants {
   static Color getCategoryColor(String category) {
     switch (category) {
       case software:
-        return const Color(0xFF00E5FF); // Cyan
+        return const Color(0xFFC4A1FF); // Luminescent Lavender
       case videos:
-        return const Color(0xFFFF5252); // Red Coral
+        return const Color(0xFFF87171); // Soft Coral Rose
       case music:
-        return const Color(0xFFFF4081); // Pink
+        return const Color(0xFFF472B6); // Soft Orchid Pink
       case documents:
-        return const Color(0xFFFFB300); // Amber
+        return const Color(0xFFFBBF24); // Warm Amber
       case images:
-        return const Color(0xFF7C4DFF); // Purple
+        return const Color(0xFFA78BFA); // Soft Iris Purple
       case archives:
-        return const Color(0xFFFF9100); // Orange
+        return const Color(0xFFFB923C); // Warm Apricot
       case games:
-        return const Color(0xFF00E676); // Emerald Green
+        return const Color(0xFF34D399); // Soft Mint Emerald
       default:
-        return const Color(0xFF90A4AE); // Blue Grey
+        return const Color(0xFFAAA2B3); // Lavender Ash (Swatch 5)
     }
   }
 }
