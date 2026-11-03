@@ -36,19 +36,22 @@ try {
 Write-Host "[2/5] Validating runtime environment..." -ForegroundColor Yellow
 
 # Check Python
-$PythonExe = (Get-Command python -ErrorAction SilentlyContinue)?.Source
-if (-not $PythonExe) {
+$PythonCmd = Get-Command python -ErrorAction SilentlyContinue
+if (-not $PythonCmd) {
     Write-Error "Python 3 is required but was not found in PATH. Please install Python 3.10+."
     exit 1
 }
+$PythonExe = $PythonCmd.Source
 Write-Host "   + Python detected: $PythonExe" -ForegroundColor Green
 
 # Check aria2c binary
 $AriaBinary = Join-Path $WorkspaceRoot "assets\bin\aria2c.exe"
 if (-not (Test-Path $AriaBinary)) {
     Write-Warning "aria2c.exe not found at assets\bin\aria2c.exe. Checking system PATH..."
-    $AriaBinary = (Get-Command aria2c -ErrorAction SilentlyContinue)?.Source
-    if (-not $AriaBinary) {
+    $AriaCmd = Get-Command aria2c -ErrorAction SilentlyContinue
+    if ($AriaCmd) {
+        $AriaBinary = $AriaCmd.Source
+    } else {
         Write-Error "aria2c executable not found. Please run .\setup.ps1 to configure binaries."
         exit 1
     }

@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart' as p;
 import '../../repositories/download_repository.dart';
 import '../../services/api/backend_api_client.dart';
 
@@ -69,12 +71,27 @@ class AnalyzerProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> startDownload(DetectedResource file, DownloadRepository repository) async {
+  Future<bool> startDownload(
+    DetectedResource file,
+    DownloadRepository repository, {
+    String? targetDirectory,
+  }) async {
     try {
+      String targetDir = targetDirectory ?? '';
+      if (targetDir.isEmpty) {
+        final settings = await repository.dbService.loadSettings();
+        targetDir = settings.defaultDownloadFolder.isNotEmpty
+            ? settings.defaultDownloadFolder
+            : (Platform.environment['USERPROFILE'] != null
+                ? p.join(Platform.environment['USERPROFILE']!, 'Downloads')
+                : Directory.current.path);
+      }
+
       // Use repository to start download directly with high-speed multi-connection acceleration
       await repository.addDownload(
         url: file.finalUrl.isNotEmpty ? file.finalUrl : file.sourceUrl,
         fileName: file.filename,
+        targetDirectory: targetDir,
         connections: 8,
       );
       return true;

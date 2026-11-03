@@ -143,7 +143,7 @@ class _QueueViewState extends State<QueueView> {
                         ? null
                         : () {
                             final first = queuedItems.first;
-                            context.read<DownloadRepository>().resumeDownload(first.id);
+                            context.read<DownloadRepository>().resumeDownload(first.gid);
                           },
                   ),
                 ],
@@ -244,12 +244,12 @@ class _QueueViewState extends State<QueueView> {
                 Row(
                   children: [
                     Text(
-                      _formatSize(item.totalBytes),
+                      _formatSize(item.fileSize),
                       style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondaryDark),
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Target: ${item.savePath}',
+                      'Target: ${item.filePath}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontSize: 11, color: AppColors.textSecondaryDark),
@@ -264,12 +264,12 @@ class _QueueViewState extends State<QueueView> {
           IconButton(
             icon: const Icon(Icons.play_arrow_rounded, color: AppColors.emeraldGreen, size: 20),
             tooltip: 'Start Now',
-            onPressed: () => repo.resumeDownload(item.id),
+            onPressed: () => repo.resumeDownload(item.gid),
           ),
           IconButton(
             icon: const Icon(Icons.close_rounded, color: AppColors.coralRed, size: 18),
             tooltip: 'Cancel & Remove',
-            onPressed: () => repo.cancelDownload(item.id),
+            onPressed: () => repo.cancelDownload(item.gid),
           ),
         ],
       ),
