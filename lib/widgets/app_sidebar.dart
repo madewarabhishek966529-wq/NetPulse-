@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../core/theme/app_colors.dart';
 import '../features/downloads/download_provider.dart';
 
@@ -158,7 +159,7 @@ class AppSidebar extends StatelessWidget {
                         color: AppColors.emeraldGreen,
                         blurRadius: 4,
                         spreadRadius: 1,
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -170,11 +171,17 @@ class AppSidebar extends StatelessWidget {
                     children: [
                       Text(
                         'Engine Active',
-                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       Text(
                         'aria2c JSON-RPC',
-                        style: TextStyle(fontSize: 10, color: AppColors.textSecondaryDark),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textSecondaryDark,
+                        ),
                       ),
                     ],
                   ),
@@ -207,7 +214,9 @@ class AppSidebar extends StatelessWidget {
         child: InkWell(
           onTap: () => onPageSelected(page),
           borderRadius: BorderRadius.circular(8),
-          hoverColor: isDark ? AppColors.darkCardHover : AppColors.lightCardHover,
+          hoverColor: isDark
+              ? AppColors.darkCardHover
+              : AppColors.lightCardHover,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
             decoration: BoxDecoration(
@@ -228,7 +237,9 @@ class AppSidebar extends StatelessWidget {
                   size: 18,
                   color: isSelected
                       ? AppColors.electricBlue
-                      : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+                      : (isDark
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondaryLight),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -236,21 +247,30 @@ class AppSidebar extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 12.5,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isSelected
                           ? (isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight)
-                          : (isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight),
+                          : (isDark
+                                ? AppColors.textSecondaryDark
+                                : AppColors.textSecondaryLight),
                     ),
                   ),
                 ),
                 if (badge != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
-                      color: (badgeColor ?? AppColors.textMutedDark).withOpacity(0.16),
+                      color: (badgeColor ?? AppColors.textMutedDark)
+                          .withOpacity(0.16),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: (badgeColor ?? AppColors.textMutedDark).withOpacity(0.4),
+                        color: (badgeColor ?? AppColors.textMutedDark)
+                            .withOpacity(0.4),
                       ),
                     ),
                     child: Text(
@@ -270,4 +290,3 @@ class AppSidebar extends StatelessWidget {
     );
   }
 }
-

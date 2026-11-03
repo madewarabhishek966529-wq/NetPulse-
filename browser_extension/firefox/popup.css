@@ -7,15 +7,15 @@
 
 body {
   width: 340px;
-  background-color: #090D16;
-  color: #F1F5F9;
+  background-color: #17151C;
+  color: #E2DDE7;
   font-size: 13px;
 }
 
 .card {
   padding: 16px;
-  background: #101726;
-  border: 1px solid #22304E;
+  background: #292531;
+  border: 1px solid #45404F;
   border-radius: 12px;
   margin: 8px;
 }
@@ -43,14 +43,14 @@ body {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+  background: linear-gradient(135deg, #E2DDE7, #C4A1FF);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .tagline {
   font-size: 10px;
-  color: #94A3B8;
+  color: #AAA2B3;
 }
 
 .status-badge {
@@ -60,22 +60,22 @@ body {
   font-size: 11px;
   padding: 4px 8px;
   border-radius: 12px;
-  background: rgba(0, 230, 118, 0.12);
-  color: #00E676;
-  border: 1px solid rgba(0, 230, 118, 0.3);
+  background: rgba(52, 211, 153, 0.15);
+  color: #34D399;
+  border: 1px solid rgba(52, 211, 153, 0.35);
 }
 
 .status-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background-color: #00E676;
-  box-shadow: 0 0 6px #00E676;
+  background-color: #34D399;
+  box-shadow: 0 0 6px #34D399;
 }
 
 .divider {
   height: 1px;
-  background: #1B243B;
+  background: #45404F;
   margin: 14px 0;
 }
 
@@ -92,12 +92,12 @@ body {
 
 .toggle-label {
   font-weight: 600;
-  color: #F1F5F9;
+  color: #E2DDE7;
 }
 
 .toggle-desc {
   font-size: 11px;
-  color: #64748B;
+  color: #716879;
   margin-top: 2px;
 }
 
@@ -121,7 +121,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #1E2B45;
+  background-color: #45404F;
   transition: .3s;
   border-radius: 22px;
 }
@@ -133,13 +133,13 @@ body {
   width: 16px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
+  background-color: #E2DDE7;
   transition: .3s;
   border-radius: 50%;
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #00E5FF, #7C4DFF);
+  background: linear-gradient(135deg, #C4A1FF, #9065E0);
 }
 
 input:checked + .slider:before {
@@ -153,38 +153,38 @@ input:checked + .slider:before {
 .input-label {
   display: block;
   font-size: 11px;
-  color: #94A3B8;
+  color: #AAA2B3;
   margin-bottom: 6px;
   font-weight: 500;
 }
 
 .text-input {
   width: 100%;
-  background: #090D16;
-  border: 1px solid #22304E;
+  background: #17151C;
+  border: 1px solid #45404F;
   border-radius: 8px;
   padding: 8px 10px;
-  color: #F1F5F9;
+  color: #E2DDE7;
   font-size: 12px;
   outline: none;
 }
 
 .text-input:focus {
-  border-color: #00E5FF;
+  border-color: #C4A1FF;
 }
 
 .input-hint {
   font-size: 10px;
-  color: #64748B;
+  color: #716879;
   margin-top: 4px;
   display: block;
 }
 
 .primary-btn {
   width: 100%;
-  background: linear-gradient(135deg, #00E5FF, #0066FF);
-  color: #000;
-  font-weight: 600;
+  background: linear-gradient(135deg, #E2DDE7, #C4A1FF);
+  color: #17151C;
+  font-weight: 700;
   border: none;
   border-radius: 8px;
   padding: 9px;
@@ -201,5 +201,5 @@ input:checked + .slider:before {
   justify-content: space-between;
   margin-top: 12px;
   font-size: 10px;
-  color: #64748B;
+  color: #716879;
 }
